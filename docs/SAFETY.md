@@ -9,8 +9,8 @@ stays compatible with MoveOS and Ola's OTA updates, and the limits of responsibl
 
 | Change | Where | Persists? | How it's undone |
 | --- | --- | --- | --- |
-| ADB key **bind-mount** (`mount --bind` of your key into `/data/misc/adb/…`) | RAM | **No** — a reboot clears it | Reboot, or `setup.py --revert` removes the key file |
-| `persist.ola.security.scootermode` set to `serv` (to enable ADB) | property store | **Yes** (survives reboot) | **Captured before change**; `setup.py --revert` restores the exact stock value |
+| ADB key **bind-mount** (`mount --bind` of your key into `/data/misc/adb/…`) | RAM | **No** — a reboot clears it | Reboot; or **phone app → Health → Restore stock state**, or `setup.py --revert`, removes the key file |
+| `persist.ola.security.scootermode` set to `serv` (to enable ADB) | property store | **Yes** (survives reboot) | **Captured before change** (phone *and* PC); restored by **phone app → Health → Restore stock state** or `setup.py --revert` to the exact stock value |
 | Installed mod **APKs** (`com.yaaratech.*`) | `/data` (user apps) | Yes, like any app | `setup.py --uninstall` (reverts grants, then removes) |
 | Per-app **appops / runtime permissions** on the mods | per-app | Yes | Reverted on uninstall (reset to default / revoked) |
 | `enabled_accessibility_services` (Balls only) | secure settings | Yes | Merge-safe add on install; **merge-safe remove** on uninstall (never clobbers other apps) |
@@ -42,18 +42,25 @@ volatile RAM, so an OTA has nothing of ours to conflict with:
 - The **ADB key bind-mount** is gone after any reboot (an OTA reboots), so it never persists
   into an update.
 - The **one persistent property** (`scootermode`) is the only thing that could matter to an
-  update flow. Before an OTA or a handover, run:
+  update flow. Before an OTA or a handover, revert it either way:
+
+  **From the phone (v1.1.1+):** open **S1Mods → Health tab → Restore stock state (safe for
+  OTA)**, then reboot the scooter. The app captured the stock value *before* the first unlock,
+  so it is restored exactly, and the temporary ADB key files are removed.
+
+  **From a PC:**
 
   ```bash
   python setup.py --revert         # restore the captured stock scootermode + remove the key
   # then reboot the scooter        # clears the RAM key bind-mount, ADB re-locks
   ```
 
-  `--revert` restores the **exact value captured** before unlock (saved in
-  `~/.ola_s1_state.json`), so MoveOS sees precisely its original state. It never guesses a
-  security value it didn't capture.
+  Both restore the **exact value captured** before unlock (the phone saves it in app storage,
+  the PC in `~/.ola_s1_state.json`), so MoveOS sees precisely its original state. Neither
+  guesses a security value it didn't capture.
 
-To go fully back to stock: `python setup.py --uninstall --revert`, then reboot.
+To go fully back to stock: uninstall the mods (phone **Health → Remove**, or
+`python setup.py --uninstall`), run the revert above, then reboot.
 
 ## 4. Not harmful — scope and responsible use
 
@@ -81,5 +88,5 @@ To go fully back to stock: `python setup.py --uninstall --revert`, then reboot.
 
 ## 5. If something seems off
 Reboot the scooter — that alone clears the ADB key bind-mount and returns the device to a
-normal boot. Then `python setup.py --revert` to restore the stock `scootermode`. Nothing this
-tool does requires reflashing to recover.
+normal boot. Then restore the stock `scootermode` from the **phone app (Health → Restore stock
+state)** or `python setup.py --revert`. Nothing this tool does requires reflashing to recover.

@@ -1,3 +1,32 @@
+## [1.1.1] - 2026-11-15 — In-app stock-state revert + installer fix
+
+Safety hardening from an end-to-end audit before real-hardware install. Release-signed with
+the same certificate as v1.0.0/v1.1.0 (updates in place).
+
+* **Restore stock state from the phone.** The Health tab now reverts the *one* persistent
+  change (`persist.ola.security.scootermode`) directly from the phone and clears the temporary
+  ADB key material — mirroring `setup.py --revert`. Reboot after to re-lock ADB. Use it before
+  an Ola OTA or handover.
+* **Stock value captured automatically.** The app records the stock `scootermode` **before**
+  the first ADB unlock overwrites it, so the revert is exact (previously only the PC tool did
+  this, leaving the phone-only path non-reversible).
+* **PC installer fix.** `setup.py` now builds its install list from `apks/manifest.json`,
+  fixing a stale Balls APK filename (`balls-1.1.0-lite-release.apk`) that could abort step 5.
+* **Docs:** `SAFETY.md` and the README safety section document both revert paths (phone + PC).
+
+## [1.1.0] - 2026-11-15 — Mod Health & management center
+
+A new **Health** tab turns the app into a mod management center, built entirely on the existing
+ADB/`ModRegistry` grant contract (no new vehicle access).
+
+* **Per-mod health:** installed?, installed version vs. the latest shipped version, and live
+  checks that each mod's accessibility service + overlay/appops are actually in effect.
+* **One-tap Repair / Install & grant / Remove** (Remove is symmetric and refuses system packages).
+* **Profiles:** Minimal / Commute / Media / Everything one-tap install+grant bundles.
+* **Backup & restore** of mod state + `scootermode`; **OTA-safe watchdog** that detects mods a
+  MoveOS update wiped and re-applies them from the last backup.
+* **Connection resilience:** persists the last scooter and silently reconnects on launch.
+
 ## [1.0.0] - 2026-11-15 — Open-source ecosystem (first public `yaaratech` release)
 
 First end-to-end open-source release: the S1Mods app (`com.yaaratech.s1mods` v1.0.0) plus all

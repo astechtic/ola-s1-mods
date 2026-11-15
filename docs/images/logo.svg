@@ -1,0 +1,17 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="S1Mods electric scooter logo">
+  <rect x="8" y="8" width="184" height="184" rx="46" fill="#0E0E0E" stroke="#242424" stroke-width="3"/>
+  <g stroke="#EDEDED" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <!-- rear wheel -->
+    <circle cx="58" cy="142" r="20"/>
+    <!-- front wheel -->
+    <circle cx="150" cy="142" r="20"/>
+    <!-- deck -->
+    <path d="M58 142 H122"/>
+    <!-- stem -->
+    <path d="M122 142 L150 72"/>
+    <!-- handlebar -->
+    <path d="M135 72 H170"/>
+  </g>
+  <!-- electric bolt accent -->
+  <path d="M104 60 L82 112 H97 L90 150 L120 98 H104 L112 60 Z" fill="#EDEDED" stroke="#0E0E0E" stroke-width="2" stroke-linejoin="round"/>
+</svg>

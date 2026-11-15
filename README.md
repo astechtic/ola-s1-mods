@@ -1,4 +1,14 @@
-# 🛵 S1Mods - Open-Source Infotainment Utility for MoveOS
+<div align="center">
+
+<img src="docs/images/logo.svg" alt="S1Mods logo" width="128" height="128" />
+
+# S1Mods
+
+### Open-Source Infotainment Utility for Ola MoveOS
+
+*Safe, reversible, one-click modding for the Ola S1 head unit — no flashing, no soldering.*
+
+</div>
 
 [![Target OS](https://img.shields.io/badge/MoveOS-≥%204.0.5%20(4.0.5%20%26%20Above)-green.svg)](#supported-vehicles--compatibility-matrix)
 [![Head Unit OS](https://img.shields.io/badge/Head%20Unit-Android%2010%20%7C%2013-blue.svg)](#technical-specifications)
@@ -197,10 +207,25 @@ python ola.py interactive --ipv6 fe80::1234:5678:9abc:def0%22
 
 ## 🔒 Safety, Reversibility & Zero Flash Modification
 
-* **Zero Partition Writes:** No system, vendor, boot, or recovery partitions are touched or flashed.
-* **In-Memory RAM Bind Mount:** The ADB key authorization uses `mount --bind` pointing to `/data/local/tmp`. It exists only in temporary RAM.
-* **Instant Reversibility:** A standard vehicle restart immediately unmounts the temporary bind and returns the vehicle to its factory state.
-* **Subsystem Isolation:** The tool communicates exclusively with the Android infotainment unit (HMI). It has no access to vehicle powertrain, throttle controls, BMS, or motor controllers.
+> **Designed to be non‑destructive, reversible, and scoped to your own vehicle.** Full details,
+> including the MoveOS/OTA‑compatibility analysis, are in **[docs/SAFETY.md](docs/SAFETY.md)**.
+
+* **Zero partition writes.** No system, vendor, boot, or recovery partitions are touched or flashed. Everything lives in `/data` (user apps) or volatile RAM.
+* **In‑memory ADB unlock.** The ADB key is authorized via a RAM `mount --bind` of a key in `/data/local/tmp`. **A reboot clears it and ADB re‑locks** — nothing persists into an OTA.
+* **Exactly one persistent change, and it's reversible.** The only thing that survives a reboot is the `persist.ola.security.scootermode` property ADB needs. The tool **captures its stock value before changing it** (on the phone *and* the PC) so it can be restored exactly.
+* **One‑tap revert.** Restore the stock state from the phone — **S1Mods → Health → Restore stock state (safe for OTA)** — or from a PC with `python setup.py --revert`, then reboot. Use it before an Ola OTA or handover.
+* **Hard guardrail on removals.** Every destructive package action **refuses MoveOS / Ola / Android system packages** (`com.olaelectric*`, `com.ola.*`, `android`, `com.android.*`, `com.google.android.*`, `com.qualcomm.*`, …). A typo can't remove a vehicle app or break the OTA pipeline. *(Covered by tests.)*
+* **Integrity before install.** Every APK is verified against its **SHA‑256** in [`apks/manifest.json`](apks/manifest.json) before install (both the PC tool and the in‑app downloader); a mismatch refuses the install.
+* **Merge‑safe accessibility.** Enabling Balls' accessibility service never clobbers an existing one — it appends/removes only its own entry.
+* **No power‑manager tampering.** The scooter's built‑in auto‑lock and anti‑theft stay 100% intact; the tool only wakes the screen, never forces a persistent stay‑on.
+* **Subsystem isolation.** Communication is **exclusively with the Android infotainment unit (HMI)**. It has no access to the powertrain, throttle, BMS, or motor controllers.
+
+| Change | Persists a reboot? | How it's undone |
+| --- | --- | --- |
+| ADB key RAM bind‑mount | **No** | Reboot (auto), or revert removes the key file |
+| `scootermode` property | Yes | Phone **Health → Restore stock state**, or `setup.py --revert` (restores captured stock value) |
+| Installed mod APKs | Yes (like any app) | Phone **Health → Remove**, or `setup.py --uninstall` (reverts grants first) |
+| Mod appops / permissions / accessibility | Yes | Reverted automatically on uninstall |
 
 ---
 
