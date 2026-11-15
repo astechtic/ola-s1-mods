@@ -42,7 +42,7 @@ Full walkthrough: **[docs/ECOSYSTEM.md](docs/ECOSYSTEM.md)**.
    *(Any shared Wi‑Fi works too, as long as both devices are on it.)*
 
 **2. Install the S1Mods app on your phone.**
-   - Download **[`S1Mods-v1.1.0.apk`](https://github.com/astechtic/ola-s1-mods/releases/latest)** from the latest release (or the copy in this repo), then open it to install.
+   - Download **[`S1Mods-v1.1.1.apk`](https://github.com/astechtic/ola-s1-mods/releases/latest)** from the latest release (or the copy in this repo), then open it to install.
    - Allow installing from unknown sources if your phone asks.
 
 **3. Connect to the scooter.**
@@ -98,7 +98,7 @@ Watch the modded infotainment interface and floating touch navigation running li
 
 ## ✨ Key Features
 
-* 📲 **All-in-One Android App (`S1Mods`):** Complete standalone Android application to auto-detect your scooter over a phone hotspot, unlock ADB, install bundled mod APKs, capture screenshots, and open settings directly from your phone — **zero PC required!** Located in [`android/`](android/) and pre-compiled as [`S1Mods-v1.1.0.apk`](S1Mods-v1.1.0.apk).
+* 📲 **All-in-One Android App (`S1Mods`):** Complete standalone Android application to auto-detect your scooter over a phone hotspot, unlock ADB, install bundled mod APKs, capture screenshots, and open settings directly from your phone — **zero PC required!** Located in [`android/`](android/) and pre-compiled as [`S1Mods-v1.1.1.apk`](S1Mods-v1.1.1.apk).
 * 🔍 **Zero-Config Auto-Discovery & Hotspot Helper:** Automatically scans IPv6 link-local multicast and local hotspot subnets. Includes an instant MAC-to-IPv6 converter using SLAAC EUI-64 standards.
 * 🛡️ **Zero Power-Manager Tampering (Safe Auto-Lock):** Does **NOT** alter the system power manager or force persistent stay-on. Your scooter's built-in auto-lock and anti-theft security remain 100% untouched.
 * 🔓 **Safe & Reversible In-Memory ADB Unlock:** Authorizes ADB over TCP port 5555 using a temporary RAM bind-mount (`mount --bind`). No system, vendor, or boot partitions are ever modified.
