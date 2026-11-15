@@ -45,6 +45,12 @@
   reverts grants before removing — previously the PC tool could only install.
 * **Build fix:** `android/gradle.properties` opts into the Provider-based assets source
   (`android.sourceset.disallowProvider=false`) so the app actually assembles on AGP 9.x.
+* **Testable without a scooter:** added `testsupport/` test doubles — a fake
+  `wifican.WifiCanRpc` gRPC daemon (`fake_wifican.py`) and a fake `adb` backed by a shared
+  in-memory device (`fake_android.py`, `fake_adb.py`). New tests exercise the real code:
+  `test_setup_integration.py` runs the install→uninstall flow through an actual `adb`
+  subprocess, and `test_grpc.py` drives `ola.py` over the fake daemon. CI now installs
+  `grpcio` and runs the full suite. See `docs/INSTALL_UNINSTALL.md`.
 
 ---
 

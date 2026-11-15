@@ -53,6 +53,27 @@ Every grant/revoke step is best-effort (one unsupported op cannot abort the rest
   ```
   Both paths share the same discover → connect → unlock-ADB steps first.
 
-## Tests
-`test_flow.py` (device-free, in CI) covers the correctness-critical parts: the merge-safe
-enable/disable, idempotency, and grant/revoke symmetry.
+## Testing it without a scooter
+The flow is tested on three levels, all without hardware (see also the
+`android.permission` grant / `settings put secure` behaviour this relies on):
+
+1. **Logic** — `test_flow.py`: merge-safe enable/disable, idempotency, grant/revoke symmetry
+   (pure, monkeypatched ADB layer).
+2. **ADB flow, end-to-end** — `test_setup_integration.py`: runs the *real* `setup.py`
+   `grant_mod` / `uninstall_mods` through an actual `adb` subprocess against a fake device
+   (`testsupport/fake_adb.py` + `fake_android.py`). Proves a real install→uninstall leaves a
+   foreign accessibility service intact and removes the package cleanly.
+3. **gRPC transport** — `test_grpc.py`: starts a fake `wifican.WifiCanRpc` daemon
+   (`testsupport/fake_wifican.py`) on localhost and drives `ola.py`'s connect + command
+   round-trip, verifying the hand-rolled protobuf wire format. Needs `grpcio`; skips without.
+
+```bash
+pip install pytest grpcio
+pytest -q                     # runs all of the above
+python testsupport/fake_wifican.py    # or run the fake daemon standalone, then:
+python ola.py info --ipv6 ::1 --port <printed-port>
+```
+
+**With an emulator (optional, still no scooter):** the install/grant/uninstall half is plain
+ADB, so an AVD exercises it for real — `adb install` a built mod, run the grant commands, and
+check `adb shell settings get secure enabled_accessibility_services`. See `docs/BUILD.md`.

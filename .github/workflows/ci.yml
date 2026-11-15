@@ -19,9 +19,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install pytest
-        run: python -m pip install --upgrade pytest
+      - name: Install test deps
+        # grpcio lets test_ola.py and test_grpc.py run the real gRPC transport against
+        # the fake wifican daemon; without it those skip and the rest still run.
+        run: python -m pip install --upgrade pytest grpcio
       - name: Run tests
-        # test_ola.py = wire-protocol helpers; test_manifest.py = APK source-of-truth
-        # integrity; test_flow.py = install/uninstall grant-contract correctness.
-        run: pytest -q test_ola.py test_manifest.py test_flow.py
+        # test_ola = wire-protocol helpers; test_manifest = APK source-of-truth integrity;
+        # test_flow = grant-contract correctness; test_setup_integration = the install/
+        # uninstall flow over a fake adb; test_grpc = ola.py over a fake wifican daemon.
+        run: pytest -q test_ola.py test_manifest.py test_flow.py test_setup_integration.py test_grpc.py
