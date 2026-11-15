@@ -27,7 +27,7 @@ object OnlineAppCatalog {
         description = "Phone-projection mod for the S1 display (CarPlay-compatible). Fork of DiPlay. 'CarPlay' is a trademark of Apple Inc.; not affiliated.",
         sizeText = "18.2 MB",
         tag = "Projection",
-        sha256 = "ee13c8c592f1d5408917bf51d7f88783eca4f4a913f71725c9cf3ee8e9976a00"
+        sha256 = "4a55f20e6fafbb91c7d8191b0e49e62fa0e4e3fb9c0e07bb3a1c080aee94cf36"
     )
 
     val apps = listOf(

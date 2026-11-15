@@ -55,3 +55,6 @@ Desktop.ini
 *.log
 *.tmp
 
+
+# apksigner v4 signature side-files
+*.idsig
