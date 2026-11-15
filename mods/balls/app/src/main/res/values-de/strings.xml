@@ -1,0 +1,204 @@
+<resources>
+    <string name="app_name">Quick Ball</string>
+    <string name="remove_battery_restriction">Meine App nicht beenden</string>
+    <string name="github_repository">GitHub-Repository</string>
+    <string name="support_me">Wenn dir meine Arbeit gefällt.\nbitte erwäge mich zu unterstützen</string>
+    <string name="support_title">Meine Arbeit unterstützen</string>
+    <string name="support_description">Wähle unten eine Plattform. Jeder Kaffee hilft mir, diese App weiter zu verbessern.</string>
+    <string name="support_tip_description">Wähle unten ein Trinkgeld. Jeder Kaffee hilft mir, diese App weiter zu verbessern.</string>
+    <string name="tip_thank_you">Vielen Dank für deine Unterstützung!</string>
+    <string name="tip_unavailable">Trinkgelder sind derzeit nicht verfügbar.</string>
+    <string name="copy_number">Nummer kopieren</string>
+    <string name="number_copied">Nummer kopiert</string>
+
+    <!-- Accessibility Service (for AndroidManifest.xml) -->
+    <string name="accessibility_service_description">QuickBall-Dienst, der eine schwebende Kugel auf Ihrem Bildschirm für schnellen Zugriff auf Funktionen bereitstellt.</string>
+
+    <!-- Home Fragment -->
+    <string name="home_title">Quick ball</string>
+    <string name="enable_quick_ball">Quick ball aktivieren</string>
+    <string name="settings_label">Einstellungen</string>
+
+    <!-- Setup Card -->
+    <string name="turn_on_quick_ball">Quick Ball aktivieren</string>
+    <string name="accessibility_setup_description">Quick Ball benötigt Zugriff auf die Bedienungshilfen, um die schwebende Schaltfläche anzuzeigen und Navigationsaktionen auszuführen.</string>
+    <string name="open_accessibility_settings">Bedienungshilfen-Einstellungen öffnen</string>
+
+    <!-- Onboarding & Permissions -->
+    <string name="onboarding_title">Lerne Quick Ball kennen</string>
+    <string name="onboarding_subtitle">Eine schwebende Schaltfläche, mit der Sie Einhand-Navigation und Schnellaktionen überall auf Ihrem Bildschirm nutzen können. Es liest niemals Bildschirminhalte und nichts verlässt Ihr Gerät.</string>
+    <string name="onboarding_bullet_1">Startseite, Zurück, Letzte Apps und mehr aus einem von Ihnen gestalteten Fächermenü</string>
+    <string name="onboarding_bullet_2">Wischgesten, Mediensteuerung und Ein-Tipp-Verknüpfungen</string>
+    <string name="onboarding_get_started">Loslegen</string>
+    <string name="onboarding_permissions_title">Berechtigungen</string>
+    <string name="onboarding_permissions_subtitle">Quick Ball benötigt nur diese zwei, um zu funktionieren. Alles andere wird erst angefordert, wenn Sie eine Funktion aktivieren, die es benötigt.</string>
+    <string name="onboarding_accessibility_title">Bedienungshilfen</string>
+    <string name="onboarding_accessibility_description">Treibt die schwebende Schaltfläche an und ermöglicht Quick Ball Navigationsaktionen wie Startseite, Zurück und Letzte Apps. Es liest niemals Bildschirminhalte.</string>
+    <string name="onboarding_system_settings_description">Ermöglicht Quick Ball die Anpassung von Systemeinstellungen wie Bildschirmhelligkeit und Lautstärke direkt aus dem schwebenden Menü.</string>
+    <string name="onboarding_permissions_warning">Quick Ball benötigt Bedienungshilfen- und Systemeinstellungen-Berechtigungen, um ordnungsgemäß zu funktionieren.</string>
+    <string name="onboarding_back">Zurück</string>
+    <string name="onboarding_start_using">Quick Ball verwenden</string>
+    <string name="permission_granted">Gewährt</string>
+    <string name="permission_grant">Gewähren</string>
+
+    <!-- Shortcut -->
+    <string name="shortcuts_title">Verknüpfungen</string>
+
+    <!-- Hide Automatically -->
+    <string name="hide_automatically_title">Automatisch ausblenden</string>
+    <string name="hide_automatically_description">Quick ball in ausgewählten Apps ausblenden.</string>
+
+    <!-- Advanced Settings -->
+    <string name="advanced_settings_title">Erweiterte Einstellungen</string>
+
+    <!-- Lock Ball Position -->
+    <string name="lock_ball_position_title">Ballposition sperren</string>
+
+    <!-- Show On Lock Screen -->
+    <string name="show_on_lock_screen_title">Auf Sperrbildschirm anzeigen</string>
+
+    <!-- Hide On Landscape -->
+    <string name="hide_on_landscape_title">Im Querformat ausblenden</string>
+
+    <!-- Stick to Edge -->
+    <string name="stick_to_edge_title">Am Rand anheften nach Inaktivität</string>
+
+    <!-- Ball Size -->
+    <string name="ball_size_title">Größe</string>
+
+    <!-- System Settings Permission -->
+    <string name="system_settings_title">Systemeinstellungen ändern</string>
+
+    <!-- Select Shortcut Fragment -->
+    <string name="quick_settings_title">Schnelleinstellungen</string>
+    <string name="apps_title">Apps</string>
+    <string name="select_shortcut_description">Tippen Sie auf eine Verknüpfung, um sie zu ändern</string>
+    <string name="reorder_shortcut_description">Ziehen Sie am Griff, um die Reihenfolge zu ändern</string>
+    <string name="drag_handle_description">Zum Neuordnen ziehen</string>
+    <string name="add_shortcut">Verknüpfung hinzufügen</string>
+    <string name="remove_shortcut">Verknüpfung entfernen</string>
+    <string name="choose_shortcut_title">Verknüpfung auswählen</string>
+    <string name="shortcut_limit_description">Sie können %1$d bis %2$d Verknüpfungen haben</string>
+    <string name="preview_title">Vorschau</string>
+
+    <!-- Language Settings -->
+    <string name="language_title">Sprache</string>
+    <string name="language_description">App-Sprache wählen</string>
+    
+    <!-- Quick Ball Menu Items -->
+    <!-- Navigation -->
+    <string name="menu_home">Startseite</string>
+    <string name="menu_back">Zurück</string>
+    <string name="menu_recent">Letzte Apps</string>
+    
+    <!-- Display -->
+    <string name="menu_brightness_up">Helligkeit erhöhen</string>
+    <string name="menu_brightness_down">Helligkeit verringern</string>
+    <string name="menu_flashlight">Taschenlampe</string>
+    <string name="menu_auto_rotate">Automatisch drehen</string>
+    
+    <!-- Media & Sound -->
+    <string name="menu_volume_up">Lautstärke erhöhen</string>
+    <string name="menu_volume_down">Lautstärke verringern</string>
+    <string name="menu_dnd">Bitte nicht stören</string>
+    <string name="menu_vibration">Ton / Vibration umschalten</string>
+    <string name="menu_play_pause">Wiedergabe/Pause</string>
+    <string name="menu_next_track">Nächster Titel</string>
+    <string name="menu_previous_track">Vorheriger Titel</string>
+    <string name="menu_sys_volume_bar">System-Lautstärkeleiste</string>
+    <string name="menu_sys_volume_panel">Lautstärkepanel öffnen</string>
+    
+    <!-- Connectivity -->
+    <string name="menu_wifi">WLAN umschalten</string>
+    <string name="menu_bluetooth">Bluetooth umschalten</string>
+    <string name="menu_mobile_data">Mobile Daten umschalten</string>
+    <string name="menu_airplane_mode">Flugmodus umschalten</string>
+    
+    <!-- Utilities -->
+    <string name="menu_screenshot">Screenshot</string>
+    <string name="menu_lock_screen">Bildschirm sperren</string>
+    <string name="menu_notification">Benachrichtigung</string>
+    <string name="menu_quick_settings">Schnelleinstellungen</string>
+    <string name="menu_power_dialog">Ein-/Aus-Menü</string>
+
+    <!-- Color Picker -->
+    <string name="choose_color">Farbe wählen</string>
+    <string name="hex_color_hint">Hex-Farbe (#AARRGGBB)</string>
+    <string name="opacity_title">Deckkraft</string>
+    <string name="brightness_title">Helligkeit</string>
+    <string name="select">Auswählen</string>
+    <string name="cancel">Abbrechen</string>
+
+    <!-- Appearance & Customization -->
+    <string name="reset_to_default">Auf Standard zurücksetzen</string>
+    <string name="ball_header_title">Schwebende Kugel</string>
+    <string name="ball_icon_color_title">Symbolfarbe</string>
+    <string name="border_section_title">Rahmen</string>
+    <string name="connector_section_title">Verbindung</string>
+    <string name="theme_title">Design</string>
+    <string name="theme_custom">Benutzerdefiniert</string>
+    <string name="setting_color_title">Farbe</string>
+    <string name="setting_width_title">Breite</string>
+    <string name="setting_style_title">Stil</string>
+    <string name="menu_header_title">Menü</string>
+    <string name="menu_icon_color_title">Symbolfarbe</string>
+    <string name="menu_size_title">Tastengröße</string>
+    <string name="menu_icon_size_title">Symbolgröße</string>
+    <string name="menu_radius_title">Abstand zur Kugel</string>
+    <string name="connector_style_none">Keine</string>
+    <string name="connector_style_line">Linie</string>
+    <string name="connector_style_dotted">Punkt</string>
+    <string name="connector_style_arc">Bogen</string>
+    <string name="connector_style_line_ring">Linienring</string>
+    <string name="connector_style_dot_ring">Punktring</string>
+    <string name="connector_style_curve">Kurve</string>
+    <string name="connector_style_fade">Verlauf</string>
+    <string name="connector_style_dash">Strich</string>
+    <string name="connector_style_taper">Keil</string>
+    <string name="connector_style_wave">Welle</string>
+    <string name="connector_style_bubble">Blasen</string>
+    <string name="connector_style_zigzag">Zickzack</string>
+    <string name="connector_style_double">Doppelt</string>
+    <string name="connector_style_glow">Leuchten</string>
+    <string name="pill_header_title">Randgriff</string>
+    <string name="pill_height_title">Höhe</string>
+    <string name="pill_thickness_title">Dicke</string>
+    <string name="pill_touch_width_title">Touch-Bereichsbreite</string>
+    <string name="pill_arc_angle_title">Bogenwinkel</string>
+
+    <!-- Toast -->
+    <string name="toast_header_title">Pop-up-Meldung</string>
+    <string name="toast_bg_color_title">Hintergrundfarbe</string>
+    <string name="toast_fg_color_title">Textfarbe</string>
+
+    <!-- Gestures -->
+    <string name="gesture_header_title">Gesten</string>
+    <string name="gesture_requirement_notice">Gesten funktionieren auf dem Randgriff, wenn \"Am Rand anheften\" aktiviert ist, oder auf dem schwebenden Ball, wenn \"Ballposition sperren\" aktiviert ist.</string>
+    <string name="enable_gestures_title">Gesten aktivieren</string>
+    <string name="enable_gestures_description">Das Aktivieren von Gesten kann das Öffnen des Menüs leicht verzögern.</string>
+    <string name="double_tap_title">Doppeltippen</string>
+    <string name="triple_tap_title">Dreifachtippen</string>
+    <string name="long_press_title">Gedrückt halten</string>
+    <string name="swipe_up_title">Nach oben wischen</string>
+    <string name="swipe_down_title">Nach unten wischen</string>
+    <string name="select_gesture_action_title">Aktion auswählen</string>
+
+    <!-- Haptics -->
+    <string name="haptics_header_title">Haptik</string>
+    <string name="vibration_feedback_title">Vibrationsfeedback</string>
+    <string name="vibration_feedback_description">Haptic-Feedback bei Tippen, Wischen und Aktionen</string>
+    <string name="haptic_light">Leicht</string>
+    <string name="haptic_medium">Mittel</string>
+    <string name="haptic_strong">Stark</string>
+
+    <!-- App Rating Dialog -->
+    <string name="rate_dialog_title">Eine Nachricht vom Entwickler ❤️</string>
+    <string name="rate_dialog_p1">Hey, ich bin\'s, der Entwickler von %1$s.</string>
+    <string name="rate_dialog_p2">Ich entwickle diese App alleine – die Funktionen, die Verbesserungen und die Fehlerbehebungen, alles in meiner Freizeit. Eure Unterstützung motiviert mich wirklich, %1$s immer weiter zu verbessern.</string>
+    <string name="rate_dialog_p3">Falls etwas nicht funktioniert oder du dir ein Feature wünschst, schreib mir einfach eine E-Mail. Ich lese jede Nachricht und gebe mein Bestes, schnell zu helfen und alles zu klären.</string>
+    <string name="rate_dialog_p4">Und wenn dir %1$s gefällt, würde eine 5★-Bewertung mir sehr viel bedeuten. Es dauert nur eine Minute, hilft aber mehr Menschen, die App zu entdecken – und macht mir ehrlich den Tag schöner.</string>
+    <string name="rate_dialog_thank_you">Danke, dass du %1$s nutzt und meine Arbeit unterstützt.</string>
+    <string name="rate_dialog_signature">Chayan</string>
+    <string name="rate_dialog_leave_review">5★-Bewertung abgeben</string>
+    <string name="rate_dialog_email_me">E-Mail schreiben</string>
+</resources>
