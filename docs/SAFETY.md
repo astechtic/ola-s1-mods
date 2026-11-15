@@ -78,7 +78,10 @@ To go fully back to stock: uninstall the mods (phone **Health → Remove**, or
 
 ### Things the user must weigh (documented, not blockers)
 - **Warranty / terms:** enabling diagnostic ADB and side-loading apps may be outside Ola's
-  terms; that is the owner's decision.
+  terms — specifically Ola's warranty exclusion of *"Control Units or software used in vehicle
+  which are not designed or approved by the company"* (T&C 6.8). It's a practical risk at Ola's
+  discretion, the tool is reversible (restore stock before service), and the decision is the
+  owner's. Full grounded analysis with Ola's exact wording and sources: **[WARRANTY.md](WARRANTY.md)**.
 - **Upstream app ToS:** Music Mod (a Spotify/YouTube-Music client) and OpenPlay/Android Auto
   (projection receivers) carry their own third-party terms and trademark considerations,
   independent of this toolkit's licensing. See `THIRD_PARTY_NOTICES.md`.

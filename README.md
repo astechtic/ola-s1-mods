@@ -208,7 +208,8 @@ python ola.py interactive --ipv6 fe80::1234:5678:9abc:def0%22
 ## 🔒 Safety, Reversibility & Zero Flash Modification
 
 > **Designed to be non‑destructive, reversible, and scoped to your own vehicle.** Full details,
-> including the MoveOS/OTA‑compatibility analysis, are in **[docs/SAFETY.md](docs/SAFETY.md)**.
+> including the MoveOS/OTA‑compatibility analysis, are in **[docs/SAFETY.md](docs/SAFETY.md)**;
+> the warranty question (with Ola's exact T&C wording and sources) is in **[docs/WARRANTY.md](docs/WARRANTY.md)**.
 
 * **Zero partition writes.** No system, vendor, boot, or recovery partitions are touched or flashed. Everything lives in `/data` (user apps) or volatile RAM.
 * **In‑memory ADB unlock.** The ADB key is authorized via a RAM `mount --bind` of a key in `/data/local/tmp`. **A reboot clears it and ADB re‑locks** — nothing persists into an OTA.
@@ -292,7 +293,8 @@ ola-s1-mods/
 * **Safety & Powertrain Non-Interference:** At no point does this software modify, reflash, or compromise safety-critical vehicle components such as the Motor Controller Unit (MCU), Battery Management System (BMS), accelerator/throttle mapping, or braking subsystems. All interactions are confined strictly to the userland Android infotainment head unit.
 * **No Cloud or Backend Interference:** No remote servers, telematics infrastructure, cellular eSIM services, or subscription backends are accessed, compromised, or disrupted. The app talks only to the scooter on the local network and does not use any Ola account, cloud credential, or private signing key.
 * **Owner's Own Device:** All operations run against a device the user owns and physically controls, over its own local network, at the owner's initiative. Any vehicle data shown (VIN, registration, telemetry) is read from the owner's own scooter for their own use.
-* **Distribution:** This app is **not** published on the Google Play Store. It is released only as an APK on GitHub for owners who choose to sideload it. Modifying your scooter may void its warranty.
+* **Distribution:** This app is **not** published on the Google Play Store. It is released only as an APK on GitHub for owners who choose to sideload it.
+* **Warranty:** Modifying the head unit **may affect your Ola warranty** — specifically Ola's exclusion of *"Control Units or software used in vehicle which are not designed or approved by the company"* (Battery Warranty T&C 6.8). It is a practical risk at Ola's discretion; the tool is fully reversible, so restore stock state before any service visit or OTA. Grounded analysis with Ola's exact wording and sources: **[docs/WARRANTY.md](docs/WARRANTY.md)**.
 
 ---
 
