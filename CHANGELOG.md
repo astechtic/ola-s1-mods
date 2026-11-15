@@ -4,9 +4,18 @@
 * **Multi-license repo:** added canonical `LICENSES/` (GPL-3.0, AGPL-3.0),
   `THIRD_PARTY_NOTICES.md`, and per-mod `LICENSE` files. The MIT license now explicitly
   covers only the S1Mods app and tooling; each companion app keeps its upstream (A)GPL license.
-* **`mods/` tree:** scaffolding to rebuild all four companion apps from their open-source
-  upstreams (QuickBall, Square, open-headunit, DiPlay), with per-app `RECOVERY.md` delta
-  reports recovered from the shipped APKs.
+* **All four companion apps are now open source and build from source.** Each is vendored
+  from its upstream (`git subtree --squash`) and rebranded, and each was build-verified to
+  produce an exact identity match (package / version / launcher / label) to the shipped APK:
+  * **Balls** ← QuickBall v6.1.0 (`com.asjohn720.ball`, foss flavor) — GPL-3.0-or-later.
+  * **OpenPlay** ← DiPlay v0.2.22 (`com.asjohn720.openplay`, incl. NDK native) — GPL-3.0.
+  * **Music Mod** ← Square v2.8.0 (`com.asjohn720.musicmod`, Rust/librespot core) — GPL-3.0-or-later.
+  * **Android Auto** ← open-headunit v.4.0.0-beta2 (`com.asjohn720.androidauto`, github flavor,
+    C++/NDK + Shizuku AIDL) — AGPL-3.0.
+  Each `mods/<x>/S1_RECOVERY.md` records the exact deltas and the verified toolchain; the
+  per-fork build matrix (Gradle / JDK / NDK / Rust) is in `docs/BUILD.md`.
+* **OpenPlay download now verified:** `apks/manifest.json` pins the shipped OpenPlay APK's
+  SHA-256 (previously `null` = installed unverified) and its upstream tag.
 
 ### 🏗️ Build & tooling
 * **Single APK source of truth:** bundled mod APKs moved to top-level `apks/` with
@@ -18,6 +27,10 @@
 * **Cross-platform setup:** `setup.py` now scans on macOS (`ndp`) and Linux (`ip -6 neigh`)
   as well as Windows; added `setup.sh` launcher. ADB unlock now reports real success/failure
   instead of always printing success.
+* **CI:** `.github/workflows/ci.yml` runs `pytest` (wire-protocol + manifest-integrity tests)
+  on every push/PR; `.github/workflows/release.yml` builds all five APKs from source on a
+  tag, signs each from CI secrets, writes `SHA256SUMS`, and publishes a GitHub Release with
+  build-provenance attestation. Added `test_manifest.py`.
 
 ---
 
