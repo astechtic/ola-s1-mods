@@ -32,6 +32,14 @@
   from source on a tag, signs each from CI secrets, writes `SHA256SUMS`, and publishes a
   GitHub Release with build-provenance attestation. Added `test_manifest.py`, `test_flow.py`.
 
+### 📖 Illustrated ecosystem docs
+* **`docs/ECOSYSTEM.md`:** a visual walkthrough of the whole toolkit (app + 4 mods + CLI),
+  how it connects to the head unit, and the app shown in **both connected and not-connected
+  states** across Setup / App Manager / Toolbox. Screenshots live in `docs/images/` and are
+  captured live on an Android emulator (the connected shots use the project's own fake
+  `wifican` daemon, so the flow is demonstrable with no scooter). README now leads with a
+  connected-vs-offline preview.
+
 ### 🛡️ MoveOS safety, reversibility & OTA compatibility
 * **Nothing persistent left behind, by design:** the only persistent MoveOS change (the
   `scootermode` property needed for ADB) is now **captured before it's changed** and restored

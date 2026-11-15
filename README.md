@@ -9,7 +9,21 @@
 
 An automated, one-click open-source setup utility and standalone Android application to unlock wireless ADB, configure **Floating Touch Navigation (Back, Home, Settings)** and **Music Player** on MoveOS-powered infotainment units running **MoveOS 4.0.5 and above**.
 
-Zero soldering, zero flash partition writes, and 100% reversible with a single vehicle restart.
+Zero soldering, zero flash partition writes. The only persistent change (the `scootermode`
+property ADB needs) is captured and restored by `setup.py --revert`; a reboot clears the
+in-RAM ADB key. See **[docs/SAFETY.md](docs/SAFETY.md)** for the full MoveOS / OTA-safe design.
+
+---
+
+## 📱 The app, connected and not connected
+
+The companion app works offline and lights up vehicle actions once a scooter is reachable.
+Full walkthrough: **[docs/ECOSYSTEM.md](docs/ECOSYSTEM.md)**.
+
+| 🔴 Not connected | 🟢 Connected |
+| --- | --- |
+| ![S1Mods not connected](docs/images/connect-not-connected.png) | ![S1Mods connected](docs/images/setup-connected.png) |
+| Discover (**Auto Scan** / **Manual**), or continue offline. | **Scooter found** — install mods and manage the head unit. |
 
 ---
 
