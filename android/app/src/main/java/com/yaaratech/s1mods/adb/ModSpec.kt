@@ -10,6 +10,8 @@ package com.yaaratech.s1mods.adb
  */
 data class ModSpec(
     val packageName: String,
+    /** Human-readable name shown in the Health dashboard. */
+    val displayName: String,
     /** Explicit launcher component (`pkg/.Activity`), or null to launch via monkey. */
     val launchActivity: String? = null,
     /** Accessibility service component to enable, or null if the mod has none. */
@@ -18,22 +20,39 @@ data class ModSpec(
     val appops: List<String> = emptyList(),
     /** Runtime permissions to `pm grant` on install and `pm revoke` on uninstall. */
     val permissions: List<String> = emptyList(),
-)
+    /** Bundled asset filename (installable offline), or null for download-only mods. */
+    val assetFileName: String? = null,
+    /** Latest shipped versionName per the manifest (for update detection). */
+    val expectedVersionName: String? = null,
+    /** Latest shipped versionCode per the manifest (for update detection). */
+    val expectedVersionCode: Long? = null,
+) {
+    /** True when the mod can be (re)installed offline from bundled assets. */
+    val isBundled: Boolean get() = assetFileName != null
+}
 
 /**
  * The known mods. Looked up by package name so both the bundled [ModApp]s and the
  * downloaded ones (OpenPlay) resolve to the same install/uninstall behaviour.
+ *
+ * Versions mirror `apks/manifest.json`; bump them here when the manifest bumps so the
+ * Health dashboard can flag an out-of-date mod on the vehicle.
  */
 object ModRegistry {
     val specs: List<ModSpec> = listOf(
         ModSpec(
             packageName = "com.yaaratech.ball",
+            displayName = "Balls Navigation",
             launchActivity = "com.yaaratech.ball/.ui.MainActivity",
             accessibilityService = "com.yaaratech.ball/com.yaaratech.ball.core.QuickBallService",
             appops = listOf("SYSTEM_ALERT_WINDOW", "WRITE_SETTINGS"),
+            assetFileName = "balls-release.apk",
+            expectedVersionName = "6.1.0",
+            expectedVersionCode = 25,
         ),
         ModSpec(
             packageName = "com.yaaratech.androidauto",
+            displayName = "Android Auto",
             appops = listOf("SYSTEM_ALERT_WINDOW", "WRITE_SETTINGS", "MANAGE_EXTERNAL_STORAGE"),
             permissions = listOf(
                 "android.permission.RECORD_AUDIO",
@@ -45,13 +64,21 @@ object ModRegistry {
                 "android.permission.BLUETOOTH_CONNECT",
                 "android.permission.BLUETOOTH_SCAN",
             ),
+            assetFileName = "com.yaaratech.androidauto.apk",
+            expectedVersionName = "4.0.0-beta2",
+            expectedVersionCode = 122,
         ),
         ModSpec(
             packageName = "com.yaaratech.musicmod",
+            displayName = "Music Mod",
             permissions = listOf("android.permission.READ_EXTERNAL_STORAGE"),
+            assetFileName = "musicmod-release.apk",
+            expectedVersionName = "2.8.0",
+            expectedVersionCode = 62,
         ),
         ModSpec(
             packageName = "com.yaaratech.openplay",
+            displayName = "OpenPlay",
             appops = listOf("SYSTEM_ALERT_WINDOW", "WRITE_SETTINGS", "GET_USAGE_STATS"),
             permissions = listOf(
                 "android.permission.RECORD_AUDIO",
@@ -60,6 +87,10 @@ object ModRegistry {
                 "android.permission.NEARBY_WIFI_DEVICES",
                 "android.permission.BLUETOOTH_CONNECT",
             ),
+            // Download-only (not bundled); fetched from the GitHub release at runtime.
+            assetFileName = null,
+            expectedVersionName = "1.0.1",
+            expectedVersionCode = 42,
         ),
     )
 

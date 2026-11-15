@@ -81,6 +81,47 @@ class AdbManager(private val context: Context) {
         (response.allOutput).trim()
     }
 
+    /** Installed-version pair parsed from `dumpsys package`. */
+    data class InstalledVersion(val versionName: String, val versionCode: Long)
+
+    /**
+     * Reads the installed versionName/versionCode of [packageName] via `dumpsys package`.
+     * Returns null if the package is not installed or the fields can't be parsed.
+     */
+    suspend fun getInstalledVersion(packageName: String): InstalledVersion? = withContext(Dispatchers.IO) {
+        val client = activeDadb ?: return@withContext null
+        val out = runCatching { client.shell("dumpsys package $packageName").allOutput }.getOrNull()
+            ?: return@withContext null
+        var vName = ""
+        var vCode = 0L
+        for (raw in out.lines()) {
+            val line = raw.trim()
+            if (vName.isEmpty() && line.startsWith("versionName=")) {
+                vName = line.removePrefix("versionName=")
+                    .trim().split("\\s+".toRegex()).firstOrNull().orEmpty()
+            }
+            if (vCode == 0L && line.contains("versionCode=")) {
+                val after = line.substringAfter("versionCode=").trim()
+                vCode = after.split("\\s+".toRegex()).firstOrNull()?.toLongOrNull() ?: 0L
+            }
+            if (vName.isNotEmpty() && vCode != 0L) break
+        }
+        if (vName.isEmpty() && vCode == 0L) null else InstalledVersion(vName, vCode)
+    }
+
+    /** True if [service] is currently in the enabled-accessibility-services list. */
+    suspend fun isAccessibilityServiceEnabled(service: String): Boolean = withContext(Dispatchers.IO) {
+        enabledAccessibilityServices().contains(service)
+    }
+
+    /** True if an appop [op] on [packageName] is set to `allow`. Best-effort. */
+    suspend fun isAppopAllowed(packageName: String, op: String): Boolean = withContext(Dispatchers.IO) {
+        val client = activeDadb ?: return@withContext false
+        val out = runCatching { client.shell("appops get $packageName $op").allOutput.trim() }.getOrNull()
+            ?: return@withContext false
+        out.contains("allow", ignoreCase = true)
+    }
+
     /** Stops the app if it is running, so an uninstall is not racing a live process. */
     suspend fun forceStop(packageName: String) = withContext(Dispatchers.IO) {
         val client = activeDadb ?: throw IllegalStateException("ADB not connected")

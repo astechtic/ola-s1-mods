@@ -42,7 +42,7 @@ Full walkthrough: **[docs/ECOSYSTEM.md](docs/ECOSYSTEM.md)**.
    *(Any shared Wi‑Fi works too, as long as both devices are on it.)*
 
 **2. Install the S1Mods app on your phone.**
-   - Download **[`S1Mods-v1.0.0.apk`](https://github.com/astechtic/ola-s1-mods/releases/latest)** from the latest release (or the copy in this repo), then open it to install.
+   - Download **[`S1Mods-v1.1.0.apk`](https://github.com/astechtic/ola-s1-mods/releases/latest)** from the latest release (or the copy in this repo), then open it to install.
    - Allow installing from unknown sources if your phone asks.
 
 **3. Connect to the scooter.**
@@ -76,6 +76,8 @@ Windows users can double‑click **`setup.bat`**. macOS/Linux users can run **`.
 
 Uninstalling is symmetric with install (it undoes exactly what install did), and the tool **refuses to touch MoveOS / system apps**, so it can't break the scooter or its updates. A reboot clears the in‑RAM ADB key on its own.
 
+> **Tip (v1.1.0+):** the phone app's **Health** tab shows each mod's status (installed? granted? up to date?) with one‑tap **Repair**, lets you **back up / restore** your mod state, and warns you if a MoveOS update wiped your mods — with a one‑tap re‑apply. See **[docs/ECOSYSTEM.md](docs/ECOSYSTEM.md)**.
+
 ---
 
 ## 🎥 Video Demonstration (Ola S1 Pro Gen 2)
@@ -96,7 +98,7 @@ Watch the modded infotainment interface and floating touch navigation running li
 
 ## ✨ Key Features
 
-* 📲 **All-in-One Android App (`S1Mods`):** Complete standalone Android application to auto-detect your scooter over a phone hotspot, unlock ADB, install bundled mod APKs, capture screenshots, and open settings directly from your phone — **zero PC required!** Located in [`android/`](android/) and pre-compiled as [`S1Mods-v1.0.0.apk`](S1Mods-v1.0.0.apk).
+* 📲 **All-in-One Android App (`S1Mods`):** Complete standalone Android application to auto-detect your scooter over a phone hotspot, unlock ADB, install bundled mod APKs, capture screenshots, and open settings directly from your phone — **zero PC required!** Located in [`android/`](android/) and pre-compiled as [`S1Mods-v1.1.0.apk`](S1Mods-v1.1.0.apk).
 * 🔍 **Zero-Config Auto-Discovery & Hotspot Helper:** Automatically scans IPv6 link-local multicast and local hotspot subnets. Includes an instant MAC-to-IPv6 converter using SLAAC EUI-64 standards.
 * 🛡️ **Zero Power-Manager Tampering (Safe Auto-Lock):** Does **NOT** alter the system power manager or force persistent stay-on. Your scooter's built-in auto-lock and anti-theft security remain 100% untouched.
 * 🔓 **Safe & Reversible In-Memory ADB Unlock:** Authorizes ADB over TCP port 5555 using a temporary RAM bind-mount (`mount --bind`). No system, vendor, or boot partitions are ever modified.
@@ -104,6 +106,8 @@ Watch the modded infotainment interface and floating touch navigation running li
 * 🎵 **Offline & Streaming Music Player:** Installs **Music Mod**, giving you ad-free music playback directly from the dash.
 * 📦 **Pre-Bundled Local APKs:** Modded application packages live in [`apks/`](apks/) (`balls-1.1.0-lite-release.apk`, `musicmod-release.apk`, `com.yaaratech.androidauto.apk`) with an [`apks/manifest.json`](apks/manifest.json) recording each package, version, SHA-256, upstream and license — for instant, offline, integrity-checked installation. Their source is rebuilt from upstream under [`mods/`](mods/).
 * 🛠️ **Automated Permission Grants:** Grants `SYSTEM_ALERT_WINDOW` (overlay), `WRITE_SETTINGS`, and Android Accessibility Services via ADB without manual prompt tapping.
+* 🩺 **Mod Health & Management Center (`Health` tab, v1.1.0+):** Per‑mod status at a glance — installed?, version vs. the latest shipped build, and whether each mod's accessibility service + overlay/appops are actually in effect — with one‑tap **Repair** (re‑applies the grant contract), **Install & grant**, and symmetric **Remove**. Also includes **Profiles** (Minimal / Commute / Media / Everything one‑tap bundles), **Backup & restore** of the mod state + `scootermode`, and an **OTA‑safe watchdog** that detects mods a MoveOS update wiped and re‑applies them from your last backup.
+* 🔁 **Connection Resilience:** Remembers your last scooter (IP/scope) and silently reconnects on launch, so Auto‑Scan isn't needed every time.
 * 🎯 **1-Click Execution:** Run via Android App or double-click `setup.bat` on PC.
 * 🐍 **Direct Root Controller (`ola.py`):** Includes a standalone, weakly-typed gRPC root control script to inspect vehicle properties, open settings, take screenshots, or execute root shell commands.
 

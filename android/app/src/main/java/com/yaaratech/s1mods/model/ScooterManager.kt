@@ -11,6 +11,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
+import org.json.JSONObject
 import java.io.File
 import java.io.FileOutputStream
 
@@ -81,14 +83,77 @@ data class VehicleSummary(
     val supported: Boolean
 )
 
+/** Overall health verdict for one mod on the vehicle. */
+enum class ModOverall { HEALTHY, NEEDS_ATTENTION, NOT_INSTALLED }
+
+/**
+ * Snapshot of one mod's state on the vehicle: whether it's installed, its version
+ * vs. the latest shipped version, and whether its grants are actually in effect.
+ */
+data class ModHealthStatus(
+    val packageName: String,
+    val displayName: String,
+    val installed: Boolean,
+    val installedVersionName: String?,
+    val installedVersionCode: Long?,
+    val expectedVersionName: String?,
+    val expectedVersionCode: Long?,
+    val updateAvailable: Boolean,
+    val hasAccessibility: Boolean,
+    val accessibilityOk: Boolean,
+    val appopsOk: Boolean,
+    val isBundled: Boolean,
+    val overall: ModOverall
+)
+
+/** A one-tap bundle of mods to install + grant together. */
+enum class ModProfile(val displayName: String, val description: String, val apps: Set<ModApp>) {
+    MINIMAL("Minimal", "Floating nav buttons only", setOf(ModApp.BALLS)),
+    COMMUTE("Commute", "Nav + Android Auto", setOf(ModApp.BALLS, ModApp.ANDROID_AUTO)),
+    MEDIA("Media", "Nav + Music", setOf(ModApp.BALLS, ModApp.MUSIC)),
+    EVERYTHING("Everything", "All bundled mods", ModApp.values().toSet())
+}
+
+/**
+ * Health of the whole mod ecosystem on the vehicle, used by the OTA-safe watchdog:
+ * how many mods are present, the persistent scooter mode, and anything that was in
+ * the last backup but has since vanished (the signature of a MoveOS update wiping mods).
+ */
+data class EcosystemState(
+    val installedModCount: Int,
+    val totalMods: Int,
+    val scootermode: String,
+    val missingSinceBackup: List<String>,
+    val hasBackup: Boolean
+) {
+    val needsReapply: Boolean get() = missingSinceBackup.isNotEmpty()
+}
+
 class ScooterManager(private val context: Context) {
 
     private val adbManager = AdbManager(context)
     private var grpcClient: S1GrpcClient? = null
 
+    private val prefs = context.getSharedPreferences("s1mods_prefs", Context.MODE_PRIVATE)
+
     val scooterIp = MutableStateFlow("")
     val scooterScope = MutableStateFlow<Int?>(null)
     val isConnected = MutableStateFlow(false)
+
+    init {
+        // Connection resilience: restore the last target so Auto-Scan isn't needed every launch.
+        val savedIp = prefs.getString("last_ip", "").orEmpty()
+        if (savedIp.isNotBlank()) {
+            scooterIp.value = savedIp
+            val savedScope = prefs.getInt("last_scope", -1)
+            scooterScope.value = if (savedScope >= 0) savedScope else null
+        }
+    }
+
+    private fun saveLastTarget(ip: String, scope: Int?) {
+        if (ip.isBlank()) return
+        prefs.edit().putString("last_ip", ip).putInt("last_scope", scope ?: -1).apply()
+    }
 
     val currentStep = MutableStateFlow<SetupStep?>(null)
     val isSetupRunning = MutableStateFlow(false)
@@ -127,6 +192,7 @@ class ScooterManager(private val context: Context) {
         grpcClient = client
         scooterIp.value = ip
         scooterScope.value = scope
+        saveLastTarget(ip, scope)
         if (markConnected) isConnected.value = true
         log("[+] Successfully connected to MoveOS Diagnostics daemon (Port 50005)!")
     }
@@ -168,6 +234,7 @@ class ScooterManager(private val context: Context) {
         val open = NetworkScanner.testPort(ip, 50005, scope, 1000)
         isConnected.value = open
         if (open) {
+            saveLastTarget(ip, scope)
             log("[+] Port 50005 is OPEN and responsive!")
         } else {
             log("[!] Port 50005 is unreachable on $ip. Ensure scooter screen is awake!")
@@ -647,6 +714,225 @@ class ScooterManager(private val context: Context) {
         val info = ScooterInfo(uid = uid, androidVersion = android, buildId = build, model = model, scooterMode = mode)
         log("[+] Model: $model | MoveOS: $build | Android: $android | Root UID: $uid")
         info
+    }
+
+    // ---- Connection resilience -------------------------------------------------
+
+    /**
+     * Silently reconnects to the last-known vehicle on app start: if a saved address
+     * is reachable on port 50005, connect and read the summary. Returns true on success.
+     * Never throws — a failed reconnect just leaves the connect gate showing.
+     */
+    suspend fun tryAutoReconnect(): Boolean = withContext(Dispatchers.IO) {
+        val ip = scooterIp.value
+        if (ip.isBlank()) return@withContext false
+        val scope = scooterScope.value
+        if (!NetworkScanner.testPort(ip, 50005, scope, 1200)) return@withContext false
+        try {
+            connect(ip, scope)
+            runCatching { fetchVehicleSummary() }
+            log("[+] Auto-reconnected to last vehicle ($ip).")
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    // ---- Mod health dashboard --------------------------------------------------
+
+    /**
+     * Inspects every registered mod on the vehicle: installed?, version vs. the latest
+     * shipped version, and whether its accessibility service + appops are actually in
+     * effect (the grants that silently fall off). Requires an unlocked ADB session.
+     */
+    suspend fun fetchModHealth(): List<ModHealthStatus> = withContext(Dispatchers.IO) {
+        ensureAdb()
+        ModRegistry.specs.map { spec ->
+            val installed = adbManager.isPackageInstalled(spec.packageName)
+            if (!installed) {
+                ModHealthStatus(
+                    packageName = spec.packageName,
+                    displayName = spec.displayName,
+                    installed = false,
+                    installedVersionName = null,
+                    installedVersionCode = null,
+                    expectedVersionName = spec.expectedVersionName,
+                    expectedVersionCode = spec.expectedVersionCode,
+                    updateAvailable = false,
+                    hasAccessibility = spec.accessibilityService != null,
+                    accessibilityOk = false,
+                    appopsOk = false,
+                    isBundled = spec.isBundled,
+                    overall = ModOverall.NOT_INSTALLED
+                )
+            } else {
+                val ver = adbManager.getInstalledVersion(spec.packageName)
+                val accOk = spec.accessibilityService?.let { adbManager.isAccessibilityServiceEnabled(it) } ?: true
+                val appsOk = spec.appops.all { adbManager.isAppopAllowed(spec.packageName, it) }
+                val updateAvail = spec.expectedVersionCode != null && ver?.versionCode != null &&
+                    spec.expectedVersionCode > ver.versionCode
+                val overall = if (accOk && appsOk) ModOverall.HEALTHY else ModOverall.NEEDS_ATTENTION
+                ModHealthStatus(
+                    packageName = spec.packageName,
+                    displayName = spec.displayName,
+                    installed = true,
+                    installedVersionName = ver?.versionName,
+                    installedVersionCode = ver?.versionCode,
+                    expectedVersionName = spec.expectedVersionName,
+                    expectedVersionCode = spec.expectedVersionCode,
+                    updateAvailable = updateAvail,
+                    hasAccessibility = spec.accessibilityService != null,
+                    accessibilityOk = accOk,
+                    appopsOk = appsOk,
+                    isBundled = spec.isBundled,
+                    overall = overall
+                )
+            }
+        }
+    }
+
+    /** Re-applies a mod's full grant contract (one-tap "Repair"). */
+    suspend fun repairMod(packageName: String): Boolean = withContext(Dispatchers.IO) {
+        val spec = ModRegistry.byPackage(packageName) ?: run {
+            log("[!] No grant contract for $packageName; nothing to repair.")
+            return@withContext false
+        }
+        ensureAdb()
+        log("[*] Repairing grants for ${spec.displayName}...")
+        adbManager.grantMod(spec)
+        log("[+] ${spec.displayName} grants re-applied.")
+        true
+    }
+
+    /** Installs a single mod by package name when it maps to a bundled [ModApp]. */
+    suspend fun installModByPackage(packageName: String): String = withContext(Dispatchers.IO) {
+        val app = ModApp.values().firstOrNull { it.packageName == packageName }
+            ?: return@withContext "No bundled installer for $packageName (download it from the Apps tab)."
+        installSingleModApp(app)
+    }
+
+    // ---- Profiles --------------------------------------------------------------
+
+    /** Installs + grants a curated bundle of mods in one tap, via the normal setup flow. */
+    suspend fun applyProfile(profile: ModProfile) = withContext(Dispatchers.IO) {
+        log("[*] Applying profile: ${profile.displayName} (${profile.apps.joinToString { it.displayName }})")
+        runFullSetup(profile.apps)
+    }
+
+    // ---- Backup & restore ------------------------------------------------------
+
+    private fun backupsDir(): File =
+        File(context.getExternalFilesDir(null), "backups").apply { mkdirs() }
+
+    /**
+     * Snapshots the current mod state — which registered mods are installed, their
+     * versions, and the persistent scooter mode — to a JSON file in app storage.
+     */
+    suspend fun backupModState(): File = withContext(Dispatchers.IO) {
+        ensureAdb()
+        val installed = ModRegistry.specs.filter { adbManager.isPackageInstalled(it.packageName) }
+        val scootermode = runCatching {
+            adbManager.shell("getprop persist.ola.security.scootermode").trim()
+        }.getOrDefault("")
+
+        val mods = JSONArray()
+        installed.forEach { spec ->
+            val ver = adbManager.getInstalledVersion(spec.packageName)
+            mods.put(JSONObject().apply {
+                put("packageName", spec.packageName)
+                put("displayName", spec.displayName)
+                put("versionName", ver?.versionName ?: "")
+                put("versionCode", ver?.versionCode ?: 0L)
+            })
+        }
+        val obj = JSONObject().apply {
+            put("schema", 1)
+            put("createdAt", System.currentTimeMillis())
+            put("scootermode", scootermode)
+            put("mods", mods)
+        }
+        val file = File(backupsDir(), "s1mods-backup-${System.currentTimeMillis()}.json")
+        file.writeText(obj.toString(2))
+        prefs.edit().putString("last_backup_path", file.absolutePath).apply()
+        log("[+] Backup saved: ${file.name} (${installed.size} mod(s)).")
+        file
+    }
+
+    /** Lists saved backups, newest first. */
+    fun listBackups(): List<File> =
+        backupsDir().listFiles { f -> f.isFile && f.extension == "json" }
+            ?.sortedByDescending { it.lastModified() } ?: emptyList()
+
+    /**
+     * Reinstalls + re-grants every bundled mod recorded in [file]. Mods already present
+     * are just re-granted; download-only mods (OpenPlay) are reported for the Apps tab.
+     * Returns how many mods were reinstalled.
+     */
+    suspend fun restoreModState(file: File): Int = withContext(Dispatchers.IO) {
+        ensureAdb()
+        val arr = JSONObject(file.readText()).optJSONArray("mods") ?: JSONArray()
+        var restored = 0
+        for (i in 0 until arr.length()) {
+            val pkg = arr.getJSONObject(i).optString("packageName")
+            if (pkg.isBlank()) continue
+            when {
+                adbManager.isPackageInstalled(pkg) -> {
+                    log("[*] $pkg already installed; re-granting.")
+                    repairMod(pkg)
+                }
+                ModApp.values().any { it.packageName == pkg } -> {
+                    installModByPackage(pkg)
+                    restored++
+                }
+                else -> log("[!] $pkg is download-only; reinstall it from the Apps tab.")
+            }
+        }
+        log("[+] Restore complete: $restored mod(s) reinstalled.")
+        restored
+    }
+
+    // ---- OTA-safe watchdog -----------------------------------------------------
+
+    /**
+     * Compares the current mod state against the last backup. If mods that were backed
+     * up are now gone, a MoveOS update likely wiped them — the UI then offers a re-apply.
+     */
+    suspend fun checkEcosystemState(): EcosystemState = withContext(Dispatchers.IO) {
+        ensureAdb()
+        val installedPkgs = ModRegistry.specs
+            .filter { adbManager.isPackageInstalled(it.packageName) }
+            .map { it.packageName }
+        val scootermode = runCatching {
+            adbManager.shell("getprop persist.ola.security.scootermode").trim()
+        }.getOrDefault("")
+
+        val backupPath = prefs.getString("last_backup_path", null)
+        val backupFile = backupPath?.let { File(it) }?.takeIf { it.exists() }
+        val missing = mutableListOf<String>()
+        if (backupFile != null) {
+            runCatching {
+                val arr = JSONObject(backupFile.readText()).optJSONArray("mods") ?: JSONArray()
+                for (i in 0 until arr.length()) {
+                    val pkg = arr.getJSONObject(i).optString("packageName")
+                    if (pkg.isNotBlank() && !installedPkgs.contains(pkg)) missing.add(pkg)
+                }
+            }
+        }
+        EcosystemState(
+            installedModCount = installedPkgs.size,
+            totalMods = ModRegistry.specs.size,
+            scootermode = scootermode,
+            missingSinceBackup = missing,
+            hasBackup = backupFile != null
+        )
+    }
+
+    /** Re-applies mods from the most recent backup (used by the watchdog's one-tap fix). */
+    suspend fun reapplyFromLastBackup(): Int = withContext(Dispatchers.IO) {
+        val path = prefs.getString("last_backup_path", null)
+        val file = path?.let { File(it) }?.takeIf { it.exists() }
+            ?: run { log("[!] No backup to re-apply from."); return@withContext 0 }
+        restoreModState(file)
     }
 
     fun disconnect() {

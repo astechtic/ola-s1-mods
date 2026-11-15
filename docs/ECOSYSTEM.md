@@ -62,6 +62,27 @@ and every vehicle action lights up.
 > `wifican` test daemon (see [`SAFETY.md`](SAFETY.md) and `testsupport/`), so the whole flow
 > is demonstrable with no scooter. A real head unit shows the same UI with real values.
 
+## Mod health & management (v1.1.0)
+
+The app's **Health** tab is the management center for everything already installed. It
+reuses the same `ModRegistry` grant contract as setup — no new vehicle access — and adds:
+
+| Feature | What it does |
+| --- | --- |
+| **Per-mod health** | For each mod: installed?, **installed version → latest shipped version**, and whether its **accessibility service** and **overlay/appops** are actually in effect (the grants that silently fall off). Reads `dumpsys package`, `settings get secure enabled_accessibility_services`, and `appops get`. |
+| **Repair** | One tap re-applies a mod's full grant contract (app-ops → permissions → merge-safe accessibility). |
+| **Install & grant / Remove** | Install a missing bundled mod, or symmetrically remove one (reverts grants first, refuses MoveOS/system packages). |
+| **Profiles** | One-tap bundles — **Minimal** (nav), **Commute** (nav + Android Auto), **Media** (nav + music), **Everything** — run through the normal install + grant flow. |
+| **Backup & restore** | Snapshots installed mods + versions + the persistent `scootermode` to JSON in app storage; restore reinstalls + re-grants bundled mods after an OTA or reset. |
+| **OTA-safe watchdog** | Compares the live state to the last backup; if a MoveOS update wiped mods, it flags them and offers a one-tap **Re-apply from backup**. |
+
+**Connection resilience:** the app persists the last scooter (IP/scope) and silently
+reconnects on launch, so Auto-Scan isn't needed every session.
+
+> The `dumpsys` / `appops` / accessibility parsers were validated directly against a live
+> Android device. The connected Health UI requires a reachable MoveOS gRPC endpoint
+> (port 50005); offline, the tab shows a clear "Not connected" prompt.
+
 ## Install / uninstall, safely
 
 - **Install:** verify APK SHA-256 → `pm install` → grant app-ops / permissions / accessibility

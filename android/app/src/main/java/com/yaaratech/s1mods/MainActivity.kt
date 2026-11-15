@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import com.yaaratech.s1mods.model.ScooterManager
 import com.yaaratech.s1mods.ui.screens.ConnectVehicleScreen
 import com.yaaratech.s1mods.ui.screens.CustomApkScreen
+import com.yaaratech.s1mods.ui.screens.ModHealthScreen
 import com.yaaratech.s1mods.ui.screens.SetupScreen
 import com.yaaratech.s1mods.ui.screens.ShellScreen
 import com.yaaratech.s1mods.ui.screens.ToolboxScreen
@@ -38,6 +39,7 @@ import com.yaaratech.s1mods.ui.theme.*
 
 enum class AppTab(val title: String, val icon: ImageVector) {
     SETUP("Setup", Icons.Default.Bolt),
+    HEALTH("Health", Icons.Default.MonitorHeart),
     TOOLBOX("Tools", Icons.Default.Dashboard),
     CUSTOM_APK("Apps", Icons.Default.Download),
     TERMINAL("Shell", Icons.Default.Terminal)
@@ -76,6 +78,11 @@ fun MainAppScaffold(manager: ScooterManager) {
     }
     val isConnected by manager.isConnected.collectAsState()
     var bypassConnectionGate by remember { mutableStateOf(false) }
+
+    // Connection resilience: silently reconnect to the last-known vehicle on launch.
+    LaunchedEffect(Unit) {
+        if (!manager.isConnected.value) manager.tryAutoReconnect()
+    }
 
     // Background update check: silent until a newer release exists.
     var updateRelease by remember { mutableStateOf<com.yaaratech.s1mods.util.AppRelease?>(null) }
@@ -242,6 +249,7 @@ fun MainAppScaffold(manager: ScooterManager) {
             ) {
                 when (selectedTab) {
                     AppTab.SETUP -> SetupScreen(manager)
+                    AppTab.HEALTH -> ModHealthScreen(manager)
                     AppTab.TOOLBOX -> ToolboxScreen(manager)
                     AppTab.CUSTOM_APK -> CustomApkScreen(manager)
                     AppTab.TERMINAL -> ShellScreen(manager)
