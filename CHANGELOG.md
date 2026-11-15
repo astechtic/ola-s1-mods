@@ -27,10 +27,24 @@
 * **Cross-platform setup:** `setup.py` now scans on macOS (`ndp`) and Linux (`ip -6 neigh`)
   as well as Windows; added `setup.sh` launcher. ADB unlock now reports real success/failure
   instead of always printing success.
-* **CI:** `.github/workflows/ci.yml` runs `pytest` (wire-protocol + manifest-integrity tests)
-  on every push/PR; `.github/workflows/release.yml` builds all five APKs from source on a
-  tag, signs each from CI secrets, writes `SHA256SUMS`, and publishes a GitHub Release with
-  build-provenance attestation. Added `test_manifest.py`.
+* **CI:** `.github/workflows/ci.yml` runs `pytest` (wire-protocol + manifest-integrity +
+  install-flow tests) on every push/PR; `.github/workflows/release.yml` builds all five APKs
+  from source on a tag, signs each from CI secrets, writes `SHA256SUMS`, and publishes a
+  GitHub Release with build-provenance attestation. Added `test_manifest.py`, `test_flow.py`.
+
+### 🔁 Proper install / uninstall flow
+* **Symmetric, data-driven grants:** install and uninstall now read one per-mod contract
+  (the `grants` block in `apks/manifest.json`, mirrored by `ModRegistry` in the app), so
+  uninstall undoes exactly what install did — stop app, remove accessibility entry, reset
+  app-ops, revoke permissions, then `pm uninstall`. See `docs/INSTALL_UNINSTALL.md`.
+* **Fixed accessibility clobber:** enabling a mod's accessibility service now **merges** into
+  `enabled_accessibility_services` instead of overwriting it, so it no longer silently
+  disables any other accessibility app the rider had on. Fixed in both `setup.py` and the
+  app's `AdbManager`.
+* **`setup.py --uninstall`:** a real uninstall path (all mods, or named packages) that
+  reverts grants before removing — previously the PC tool could only install.
+* **Build fix:** `android/gradle.properties` opts into the Provider-based assets source
+  (`android.sourceset.disallowProvider=false`) so the app actually assembles on AGP 9.x.
 
 ---
 

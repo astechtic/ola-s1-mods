@@ -302,66 +302,161 @@ echo "bound $T"
     print("    [+] ADB connected and verified as 'device'.")
     return device
 
-def install_and_grant(device: str, adb_exe: str, apks: dict[str, str]):
-    """Installs bundled APKs and grants necessary Android permissions."""
-    # Pinned SHA-256 per filename, from apks/manifest.json.
-    sha_by_name = {
-        a.get("fileName"): a.get("sha256")
-        for a in load_apk_manifest().get("apks", [])
+# --- Mod grant contracts (from apks/manifest.json "grants") --------------------------
+# Install and uninstall read the SAME contract, so they stay symmetric: everything
+# install turns on, uninstall turns back off. Mirrors ModRegistry.kt in the app.
+
+def _manifest_apks() -> list[dict]:
+    return load_apk_manifest().get("apks", [])
+
+
+def all_mod_packages() -> list[str]:
+    return [a["packageName"] for a in _manifest_apks() if a.get("packageName")]
+
+
+def _adb_shell(adb_exe: str, device: str, *args: str, capture: bool = False) -> str:
+    """Run `adb -s <device> shell <args...>`. Quiet by default; returns stdout if capture."""
+    cmd = [adb_exe, "-s", device, "shell", *args]
+    if capture:
+        res = subprocess.run(cmd, capture_output=True, text=True)
+        return (res.stdout or "").strip()
+    subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    return ""
+
+
+def _enabled_accessibility_services(adb_exe: str, device: str) -> list[str]:
+    # `settings get` prints the literal "null" when the key is unset.
+    raw = _adb_shell(adb_exe, device, "settings", "get", "secure",
+                     "enabled_accessibility_services", capture=True)
+    if not raw or raw == "null":
+        return []
+    return [s for s in (p.strip() for p in raw.split(":")) if s]
+
+
+def add_accessibility_service(adb_exe: str, device: str, service: str):
+    """Enable an accessibility service WITHOUT clobbering any already-enabled one."""
+    services = _enabled_accessibility_services(adb_exe, device)
+    if service not in services:
+        services.append(service)
+    _adb_shell(adb_exe, device, "settings", "put", "secure",
+               "enabled_accessibility_services", ":".join(services))
+    _adb_shell(adb_exe, device, "settings", "put", "secure", "accessibility_enabled", "1")
+
+
+def remove_accessibility_service(adb_exe: str, device: str, service: str):
+    """Drop our accessibility service from the list, leaving any others intact."""
+    services = [s for s in _enabled_accessibility_services(adb_exe, device) if s != service]
+    _adb_shell(adb_exe, device, "settings", "put", "secure",
+               "enabled_accessibility_services", ":".join(services))
+    if not services:
+        _adb_shell(adb_exe, device, "settings", "put", "secure", "accessibility_enabled", "0")
+
+
+def grant_mod(adb_exe: str, device: str, pkg: str, grants: dict, launch: bool = True):
+    """Apply a mod's contract: appops -> runtime permissions -> accessibility (merge-safe)."""
+    for op in grants.get("appops", []):
+        _adb_shell(adb_exe, device, "appops", "set", pkg, op, "allow")
+    for perm in grants.get("permissions", []):
+        _adb_shell(adb_exe, device, "pm", "grant", pkg, perm)
+    svc = grants.get("accessibilityService")
+    if svc:
+        add_accessibility_service(adb_exe, device, svc)
+    activity = grants.get("launchActivity")
+    if launch and activity:
+        _adb_shell(adb_exe, device, "am", "start", "-n", activity)
+        time.sleep(1.0)
+
+
+def revoke_mod(adb_exe: str, device: str, pkg: str, grants: dict):
+    """Exact inverse of grant_mod, run before `pm uninstall`."""
+    _adb_shell(adb_exe, device, "am", "force-stop", pkg)
+    svc = grants.get("accessibilityService")
+    if svc:
+        remove_accessibility_service(adb_exe, device, svc)
+    for op in grants.get("appops", []):
+        _adb_shell(adb_exe, device, "appops", "set", pkg, op, "default")
+    for perm in grants.get("permissions", []):
+        _adb_shell(adb_exe, device, "pm", "revoke", pkg, perm)
+
+
+def _installed_packages(adb_exe: str, device: str) -> set[str]:
+    out = _adb_shell(adb_exe, device, "pm", "list", "packages", capture=True)
+    return {
+        line.strip().removeprefix("package:")
+        for line in out.splitlines()
+        if line.strip().startswith("package:")
     }
 
-    def safe_install(apk_path: str, app_name: str):
+
+def install_and_grant(device: str, adb_exe: str, apks: dict[str, str]):
+    """Installs bundled APKs (integrity-verified) and grants each one's contract."""
+    manifest = _manifest_apks()
+    sha_by_name = {a.get("fileName"): a.get("sha256") for a in manifest}
+    pkg_by_name = {a.get("fileName"): a.get("packageName") for a in manifest}
+    grants_by_pkg = {a.get("packageName"): (a.get("grants") or {}) for a in manifest}
+
+    def safe_install(apk_path: str, app_name: str) -> bool:
         print(f"[*] Installing {app_name} ({os.path.basename(apk_path)})...")
         if not verify_apk(apk_path, sha_by_name.get(os.path.basename(apk_path))):
             print(f"    [!] REFUSING to install {app_name}: integrity check failed.")
-            return
+            return False
         res = subprocess.run([adb_exe, "-s", device, "install", "-r", "-d", apk_path], capture_output=True, text=True)
         combined = (res.stdout + " " + res.stderr).strip()
         if "Success" in combined:
             print(f"    [+] {app_name} installed successfully.")
-        elif "ALREADY_EXISTS" in combined or "signatures do not match" in combined:
+            return True
+        if "ALREADY_EXISTS" in combined or "signatures do not match" in combined:
             print(f"    [+] {app_name} is already installed / updated.")
-        else:
-            print(f"    [*] Install status: {combined or 'Done'}")
+            return True
+        print(f"    [!] Install failed for {app_name}: {combined or 'unknown error'}")
+        return False
 
+    installed_pkgs: list[str] = []
     for name, path in apks.items():
-        if os.path.isfile(path):
-            safe_install(path, name)
+        if os.path.isfile(path) and safe_install(path, name):
+            pkg = pkg_by_name.get(os.path.basename(path))
+            if pkg:
+                installed_pkgs.append(pkg)
 
-    # Balls Navigation permissions
-    pkg_ball = "com.asjohn720.ball"
-    svc_ball = f"{pkg_ball}/com.asjohn720.ball.core.QuickBallService"
-    if "Balls Navigation" in apks and os.path.isfile(apks["Balls Navigation"]):
-        print("[*] Granting special permissions to Balls Navigation via ADB...")
-        subprocess.run([adb_exe, "-s", device, "shell", "appops", "set", pkg_ball, "SYSTEM_ALERT_WINDOW", "allow"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        subprocess.run([adb_exe, "-s", device, "shell", "appops", "set", pkg_ball, "WRITE_SETTINGS", "allow"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        subprocess.run([adb_exe, "-s", device, "shell", "settings", "put", "secure", "enabled_accessibility_services", svc_ball], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        subprocess.run([adb_exe, "-s", device, "shell", "settings", "put", "secure", "accessibility_enabled", "1"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        print("    [+] Balls: SYSTEM_ALERT_WINDOW, WRITE_SETTINGS & Accessibility granted.")
-        subprocess.run([adb_exe, "-s", device, "shell", "am", "start", "-n", f"{pkg_ball}/.ui.MainActivity"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        time.sleep(1.0)
-
-    # Android Auto permissions
-    pkg_aa = "com.asjohn720.androidauto"
-    if "Android Auto" in apks and os.path.isfile(apks["Android Auto"]):
-        print("[*] Granting permissions to Android Auto (OpenHeadUnit) via ADB...")
-        subprocess.run([adb_exe, "-s", device, "shell", "appops", "set", pkg_aa, "SYSTEM_ALERT_WINDOW", "allow"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        subprocess.run([adb_exe, "-s", device, "shell", "appops", "set", pkg_aa, "WRITE_SETTINGS", "allow"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        subprocess.run([adb_exe, "-s", device, "shell", "pm", "grant", pkg_aa, "android.permission.RECORD_AUDIO"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        subprocess.run([adb_exe, "-s", device, "shell", "pm", "grant", pkg_aa, "android.permission.ACCESS_FINE_LOCATION"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        subprocess.run([adb_exe, "-s", device, "shell", "pm", "grant", pkg_aa, "android.permission.ACCESS_COARSE_LOCATION"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        subprocess.run([adb_exe, "-s", device, "shell", "pm", "grant", pkg_aa, "android.permission.READ_EXTERNAL_STORAGE"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        subprocess.run([adb_exe, "-s", device, "shell", "pm", "grant", pkg_aa, "android.permission.WRITE_EXTERNAL_STORAGE"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        subprocess.run([adb_exe, "-s", device, "shell", "appops", "set", pkg_aa, "MANAGE_EXTERNAL_STORAGE", "allow"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        subprocess.run([adb_exe, "-s", device, "shell", "pm", "grant", pkg_aa, "android.permission.NEARBY_WIFI_DEVICES"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        subprocess.run([adb_exe, "-s", device, "shell", "pm", "grant", pkg_aa, "android.permission.BLUETOOTH_CONNECT"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        subprocess.run([adb_exe, "-s", device, "shell", "pm", "grant", pkg_aa, "android.permission.BLUETOOTH_SCAN"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        print("    [+] Android Auto: Mic, Location, Overlay, Storage & Bluetooth granted.")
+    for pkg in installed_pkgs:
+        grants = grants_by_pkg.get(pkg) or {}
+        if not grants:
+            continue
+        print(f"[*] Granting permissions to {pkg} via ADB...")
+        grant_mod(adb_exe, device, pkg, grants)
+        print(f"    [+] {pkg}: permissions & settings applied.")
 
     print("[*] Bringing Dashboard Home to front...")
-    subprocess.run([adb_exe, "-s", device, "shell", "am", "start", "-n", "com.olaelectric.hmiclient/.MainActivity"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    subprocess.run([adb_exe, "-s", device, "shell", "input", "keyevent", "3"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    _adb_shell(adb_exe, device, "am", "start", "-n", "com.olaelectric.hmiclient/.MainActivity")
+    _adb_shell(adb_exe, device, "input", "keyevent", "3")
     print("    [+] Scooter returned to speedometer dashboard.")
+
+
+def uninstall_mods(device: str, adb_exe: str, packages: list[str]):
+    """Cleanly removes mods: revert each one's grant contract, THEN `pm uninstall`."""
+    grants_by_pkg = {a.get("packageName"): (a.get("grants") or {}) for a in _manifest_apks()}
+    present = _installed_packages(adb_exe, device)
+    any_done = False
+    for pkg in packages:
+        if pkg not in present:
+            print(f"[*] {pkg} is not installed; skipping.")
+            continue
+        any_done = True
+        print(f"[*] Uninstalling {pkg} ...")
+        grants = grants_by_pkg.get(pkg) or {}
+        if grants:
+            print("    [*] Reverting permissions, accessibility & appops...")
+            revoke_mod(adb_exe, device, pkg, grants)
+        else:
+            _adb_shell(adb_exe, device, "am", "force-stop", pkg)
+        res = subprocess.run([adb_exe, "-s", device, "uninstall", pkg], capture_output=True, text=True)
+        out = (res.stdout + " " + res.stderr).strip()
+        print(f"    [+] {pkg}: {out or 'removed'}")
+    if not any_done:
+        print("[*] Nothing to uninstall.")
+    print("[*] Bringing Dashboard Home to front...")
+    _adb_shell(adb_exe, device, "am", "start", "-n", "com.olaelectric.hmiclient/.MainActivity")
+    _adb_shell(adb_exe, device, "input", "keyevent", "3")
 
 def main():
     print(BANNER)
@@ -370,6 +465,11 @@ def main():
     parser.add_argument("--ipv6", help="Scooter IPv6 address (e.g. fe80::1234:5678:9abc:def0)")
     parser.add_argument("--scope", type=int, help="Interface scope ID (e.g. 22)")
     parser.add_argument("--port", type=int, default=50005, help="Ola gRPC port (default 50005)")
+    parser.add_argument(
+        "--uninstall", nargs="*", metavar="PKG",
+        help="Uninstall mods (revert grants, then remove) instead of installing. "
+             "With no package names, removes every mod listed in apks/manifest.json.",
+    )
     args = parser.parse_args()
 
     # Step 1: Check ADB
@@ -428,6 +528,18 @@ def main():
     # Step 4: Unlock ADB
     print_step(4, "Unlocking ADB Access")
     device = unlock_adb(channel, ipv6, scope, adb_exe)
+
+    # Uninstall path: revert each mod's grants, then remove it. Shares steps 1-4 above.
+    if args.uninstall is not None:
+        print_step(5, "Uninstalling Mods & Reverting Permissions")
+        targets = args.uninstall or all_mod_packages()
+        print(f"[*] Targets: {', '.join(targets)}")
+        uninstall_mods(device, adb_exe, targets)
+        print("\n" + "=" * 72)
+        print("              MODS UNINSTALLED & SETTINGS REVERTED              ")
+        print("=" * 72)
+        print("[+] Scooter display is back on your Speedometer Dashboard.")
+        return
 
     # Step 5: Verify Bundled APKs
     print_step(5, "Verifying Bundled Mod APK Packages")

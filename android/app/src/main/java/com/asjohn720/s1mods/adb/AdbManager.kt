@@ -81,64 +81,80 @@ class AdbManager(private val context: Context) {
         (response.allOutput).trim()
     }
 
-    /**
-     * Grants essential permissions for Balls floating overlay.
-     */
-    suspend fun grantBallPermissions() = withContext(Dispatchers.IO) {
+    /** Stops the app if it is running, so an uninstall is not racing a live process. */
+    suspend fun forceStop(packageName: String) = withContext(Dispatchers.IO) {
         val client = activeDadb ?: throw IllegalStateException("ADB not connected")
-        val pkg = "com.asjohn720.ball"
-        val svc = "$pkg/com.asjohn720.ball.core.QuickBallService"
+        client.shell("am force-stop $packageName")
+        Unit
+    }
 
-        // 1. Overlay (SYSTEM_ALERT_WINDOW)
-        client.shell("appops set $pkg SYSTEM_ALERT_WINDOW allow")
-
-        // 2. Write Settings
-        client.shell("appops set $pkg WRITE_SETTINGS allow")
-
-        // 3. Accessibility Service
-        client.shell("settings put secure enabled_accessibility_services $svc")
-        client.shell("settings put secure accessibility_enabled 1")
-
-        // 4. Launch Balls Main Activity
-        client.shell("am start -n $pkg/.ui.MainActivity")
-
-        // 5. Return to Dashboard Home
-        client.shell("am start -n com.olaelectric.hmiclient/.MainActivity")
-        client.shell("input keyevent 3")
+    /** The current `enabled_accessibility_services` list, split into components. */
+    private suspend fun enabledAccessibilityServices(): MutableList<String> {
+        val client = activeDadb ?: throw IllegalStateException("ADB not connected")
+        val raw = client.shell("settings get secure enabled_accessibility_services").allOutput.trim()
+        // `settings get` prints the literal string "null" when the key is unset.
+        if (raw.isEmpty() || raw == "null") return mutableListOf()
+        return raw.split(':').map { it.trim() }.filter { it.isNotEmpty() }.toMutableList()
     }
 
     /**
-     * Grants permissions for Android Auto (OpenHeadUnit) via ADB:
-     * - Microphone (RECORD_AUDIO)
-     * - Location (ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION)
-     * - Display over other apps (SYSTEM_ALERT_WINDOW)
-     * - Storage (READ/WRITE_EXTERNAL_STORAGE, MANAGE_EXTERNAL_STORAGE)
-     * - System settings & Wi-Fi/Bluetooth
+     * Enables an accessibility service **without clobbering** any already-enabled one:
+     * read the colon-separated list, add our component if absent, write it back.
      */
-    suspend fun grantAndroidAutoPermissions() = withContext(Dispatchers.IO) {
+    suspend fun addAccessibilityService(service: String) = withContext(Dispatchers.IO) {
         val client = activeDadb ?: throw IllegalStateException("ADB not connected")
-        val pkg = "com.asjohn720.androidauto"
+        val services = enabledAccessibilityServices()
+        if (!services.contains(service)) services.add(service)
+        client.shell("settings put secure enabled_accessibility_services ${services.joinToString(":")}")
+        client.shell("settings put secure accessibility_enabled 1")
+        Unit
+    }
 
-        // Overlay & Settings
-        client.shell("appops set $pkg SYSTEM_ALERT_WINDOW allow")
-        client.shell("appops set $pkg WRITE_SETTINGS allow")
+    /**
+     * Removes our accessibility service from the list (leaving any others intact). If the
+     * list becomes empty, also flips `accessibility_enabled` back to 0.
+     */
+    suspend fun removeAccessibilityService(service: String) = withContext(Dispatchers.IO) {
+        val client = activeDadb ?: throw IllegalStateException("ADB not connected")
+        val services = enabledAccessibilityServices()
+        services.remove(service)
+        client.shell("settings put secure enabled_accessibility_services ${services.joinToString(":")}")
+        if (services.isEmpty()) client.shell("settings put secure accessibility_enabled 0")
+        Unit
+    }
 
-        // Microphone
-        client.shell("pm grant $pkg android.permission.RECORD_AUDIO")
+    /**
+     * Applies a mod's full [ModSpec]: appops → runtime permissions → accessibility
+     * (merge-safe). Each step is best-effort so one unsupported op can't abort the rest.
+     */
+    suspend fun grantMod(spec: ModSpec) = withContext(Dispatchers.IO) {
+        val client = activeDadb ?: throw IllegalStateException("ADB not connected")
+        spec.appops.forEach { op ->
+            runCatching { client.shell("appops set ${spec.packageName} $op allow") }
+        }
+        spec.permissions.forEach { perm ->
+            runCatching { client.shell("pm grant ${spec.packageName} $perm") }
+        }
+        spec.accessibilityService?.let { addAccessibilityService(it) }
+        Unit
+    }
 
-        // Location
-        client.shell("pm grant $pkg android.permission.ACCESS_FINE_LOCATION")
-        client.shell("pm grant $pkg android.permission.ACCESS_COARSE_LOCATION")
-
-        // Storage
-        client.shell("pm grant $pkg android.permission.READ_EXTERNAL_STORAGE")
-        client.shell("pm grant $pkg android.permission.WRITE_EXTERNAL_STORAGE")
-        client.shell("appops set $pkg MANAGE_EXTERNAL_STORAGE allow")
-
-        // Connectivity
-        client.shell("pm grant $pkg android.permission.NEARBY_WIFI_DEVICES")
-        client.shell("pm grant $pkg android.permission.BLUETOOTH_CONNECT")
-        client.shell("pm grant $pkg android.permission.BLUETOOTH_SCAN")
+    /**
+     * The exact inverse of [grantMod], run before `pm uninstall`: stop the app, drop the
+     * accessibility service from the shared list, reset appops to default and revoke the
+     * runtime permissions we granted. Best-effort throughout.
+     */
+    suspend fun revokeMod(spec: ModSpec) = withContext(Dispatchers.IO) {
+        val client = activeDadb ?: throw IllegalStateException("ADB not connected")
+        runCatching { forceStop(spec.packageName) }
+        spec.accessibilityService?.let { runCatching { removeAccessibilityService(it) } }
+        spec.appops.forEach { op ->
+            runCatching { client.shell("appops set ${spec.packageName} $op default") }
+        }
+        spec.permissions.forEach { perm ->
+            runCatching { client.shell("pm revoke ${spec.packageName} $perm") }
+        }
+        Unit
     }
 
     fun disconnect() {

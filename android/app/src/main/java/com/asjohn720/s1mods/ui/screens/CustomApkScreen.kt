@@ -674,6 +674,7 @@ fun CustomApkScreen(manager: ScooterManager) {
                                 activeAppAction = "${carPlayApp.id}:installing"
                                 try {
                                     manager.installApkFile(carPlayFile, carPlayApp.displayName)
+                                    manager.configureInstalledMod(carPlayApp.packageName, carPlayApp.displayName)
                                     Toast.makeText(context, "${carPlayApp.displayName} installed on scooter!", Toast.LENGTH_SHORT).show()
                                     refreshAllData()
                                 } catch (e: Exception) {
@@ -801,6 +802,7 @@ fun CustomApkScreen(manager: ScooterManager) {
                                     activeAppAction = "${onlineApp.id}:installing"
                                     try {
                                         manager.installApkFile(localFile, onlineApp.displayName)
+                                        manager.configureInstalledMod(onlineApp.packageName, onlineApp.displayName)
                                         Toast.makeText(context, "${onlineApp.displayName} installed on scooter!", Toast.LENGTH_SHORT).show()
                                         refreshAllData()
                                     } catch (e: Exception) {

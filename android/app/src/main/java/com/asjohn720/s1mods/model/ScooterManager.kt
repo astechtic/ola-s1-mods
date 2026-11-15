@@ -3,6 +3,7 @@ package com.asjohn720.s1mods.model
 import android.content.Context
 import android.graphics.Bitmap
 import com.asjohn720.s1mods.adb.AdbManager
+import com.asjohn720.s1mods.adb.ModRegistry
 import com.asjohn720.s1mods.discovery.DiscoveredScooter
 import com.asjohn720.s1mods.discovery.NetworkScanner
 import com.asjohn720.s1mods.grpc.S1GrpcClient
@@ -236,16 +237,10 @@ class ScooterManager(private val context: Context) {
             // Step 4: Grant Permissions
             currentStep.value = SetupStep.GRANT_PERMISSIONS
             log("\n[4/5] Granting required permissions via ADB...")
-            if (selectedApps.contains(ModApp.BALLS)) {
-                log("[*] Configuring Balls Navigation (Overlay, Settings & Accessibility)...")
-                adbManager.grantBallPermissions()
-                log("[+] Balls Navigation permissions granted & initialized.")
-            }
-
-            if (selectedApps.contains(ModApp.ANDROID_AUTO)) {
-                log("[*] Configuring Android Auto permissions (Microphone, Location, Overlay, Storage)...")
-                adbManager.grantAndroidAutoPermissions()
-                log("[+] Android Auto permissions granted.")
+            // Data-driven from ModRegistry, so every selected mod gets exactly its
+            // declared grants (and the same path is reused for single-app installs).
+            selectedApps.forEach { app ->
+                configureInstalledMod(app.packageName, app.displayName)
             }
 
             // Step 5: Finalize & Return to Home
@@ -347,36 +342,54 @@ class ScooterManager(private val context: Context) {
 
         installAssetApk(app.assetFileName, app.displayName)
 
-        // Automatically apply required permissions
-        when (app) {
-            ModApp.BALLS -> {
-                log("[*] Configuring Balls Navigation overlay & permissions...")
-                adbManager.grantBallPermissions()
-                log("[+] Balls permissions configured.")
-            }
-            ModApp.ANDROID_AUTO -> {
-                log("[*] Configuring Android Auto permissions...")
-                adbManager.grantAndroidAutoPermissions()
-                log("[+] Android Auto permissions configured.")
-            }
-            ModApp.MUSIC -> {
-                log("[*] Configuring Music Mod permissions...")
-                try {
-                    adbManager.shell("pm grant ${app.packageName} android.permission.READ_EXTERNAL_STORAGE")
-                } catch (_: Exception) {}
-                log("[+] Music Mod configured.")
-            }
-        }
+        // Automatically apply the mod's permission contract (data-driven from ModRegistry).
+        configureInstalledMod(app.packageName, app.displayName)
+
         log("[+] ${app.displayName} installed and configured successfully!")
         "Installed"
     }
 
     /**
-     * Uninstalls any package cleanly from the vehicle.
+     * Applies a mod's [ModSpec] grants after its APK is on the vehicle: appops, runtime
+     * permissions and (merge-safe) accessibility. For a mod that declares a launcher
+     * component (Balls), also launches it so its one-time in-app setup can run, then
+     * returns the dashboard to the MoveOS HMI. Safe to call for any installed package;
+     * a package with no registered spec is left untouched.
+     */
+    suspend fun configureInstalledMod(packageName: String, friendlyName: String = packageName) =
+        withContext(Dispatchers.IO) {
+            val spec = ModRegistry.byPackage(packageName)
+            if (spec == null) {
+                log("[*] No permission contract registered for $packageName; skipping grants.")
+                return@withContext
+            }
+            log("[*] Configuring $friendlyName permissions...")
+            adbManager.grantMod(spec)
+            spec.launchActivity?.let { component ->
+                adbManager.shell("am start -n $component")
+                // Bring the MoveOS speedometer cluster back to the front afterwards.
+                adbManager.shell("am start -n com.olaelectric.hmiclient/.MainActivity")
+                adbManager.shell("input keyevent 3")
+            }
+            log("[+] $friendlyName permissions configured.")
+        }
+
+    /**
+     * Uninstalls a mod cleanly: undo its [ModSpec] grants first (stop the app, drop its
+     * accessibility entry from the shared list, reset appops, revoke runtime permissions),
+     * *then* `pm uninstall` — so nothing is left dangling. A package with no registered
+     * spec is simply stopped and uninstalled.
      */
     suspend fun uninstallPackage(packageName: String): String = withContext(Dispatchers.IO) {
         log("[*] Uninstalling $packageName...")
         ensureAdb()
+        val spec = ModRegistry.byPackage(packageName)
+        if (spec != null) {
+            log("[*] Reverting ${packageName} permissions and settings...")
+            adbManager.revokeMod(spec)
+        } else {
+            runCatching { adbManager.forceStop(packageName) }
+        }
         val res = adbManager.uninstallPackage(packageName)
         log("[+] Uninstall result: $res")
         res
