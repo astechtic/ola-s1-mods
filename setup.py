@@ -651,14 +651,20 @@ def main():
     repo_dir = os.path.dirname(os.path.abspath(__file__))
     apks_dir = os.path.join(repo_dir, "apks")
 
+    # Build the install list from the manifest (single source of truth) so the APK
+    # filenames can never drift out of sync with what's actually in apks/.
+    bundled = [a for a in _manifest_apks()
+               if a.get("distribution", "bundled") == "bundled" and a.get("fileName")]
     apks_to_install = {
-        "Balls Navigation": os.path.join(apks_dir, "balls-1.1.0-lite-release.apk"),
-        "Music Mod": os.path.join(apks_dir, "musicmod-release.apk"),
-        "Android Auto": os.path.join(apks_dir, "com.yaaratech.androidauto.apk")
+        (a.get("displayName") or a.get("packageName")): os.path.join(apks_dir, a["fileName"])
+        for a in bundled
     }
 
-    if not os.path.isfile(apks_to_install["Balls Navigation"]):
-        print(f"[!] Error: Mandatory APK missing at {apks_to_install['Balls Navigation']}")
+    # Balls (floating navigation) is mandatory; fail early if its APK is missing.
+    balls_entry = next((a for a in bundled if a.get("packageName") == "com.yaaratech.ball"), None)
+    balls_path = os.path.join(apks_dir, balls_entry["fileName"]) if balls_entry else None
+    if not balls_path or not os.path.isfile(balls_path):
+        print(f"[!] Error: Mandatory Balls APK missing (expected {balls_path or 'per manifest'}).")
         sys.exit(1)
 
     for name, path in apks_to_install.items():

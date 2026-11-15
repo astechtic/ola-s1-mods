@@ -129,6 +129,9 @@ data class EcosystemState(
     val needsReapply: Boolean get() = missingSinceBackup.isNotEmpty()
 }
 
+/** The one persistent MoveOS property ADB unlock changes; captured so it can be restored. */
+private const val SCOOTERMODE_PROP = "persist.ola.security.scootermode"
+
 class ScooterManager(private val context: Context) {
 
     private val adbManager = AdbManager(context)
@@ -276,6 +279,7 @@ class ScooterManager(private val context: Context) {
             // Step 2: Unlock ADB (In-Memory RAM Bind Mount)
             currentStep.value = SetupStep.UNLOCK_ADB
             log("\n[2/5] Authorizing ADB key via in-memory RAM mount...")
+            captureOriginalScootermode()
             val (_, pubKey) = adbManager.getOrCreateAdbKeyPair()
             val unlocked = grpcClient?.unlockAdb(pubKey) ?: false
             if (!unlocked) {
@@ -357,6 +361,7 @@ class ScooterManager(private val context: Context) {
         if (grpcClient == null || !isConnected.value) {
             connect()
         }
+        captureOriginalScootermode()
         val (_, pubKey) = adbManager.getOrCreateAdbKeyPair()
         grpcClient?.unlockAdb(pubKey)
         adbManager.connect(scooterIp.value, 5555)
@@ -736,6 +741,49 @@ class ScooterManager(private val context: Context) {
         } catch (_: Exception) {
             false
         }
+    }
+
+    // ---- MoveOS stock-state capture & restore (reversibility) ------------------
+
+    /**
+     * Captures the stock `scootermode` BEFORE the ADB unlock overwrites it with "serv",
+     * so the one persistent change this tool makes can be rolled back exactly. Saved once
+     * (the first-ever unlock sees the true stock value); later calls are no-ops.
+     */
+    private suspend fun captureOriginalScootermode() = withContext(Dispatchers.IO) {
+        if (prefs.getString("scootermode_original", null) != null) return@withContext
+        val client = grpcClient ?: return@withContext
+        val v = runCatching { client.shell("getprop $SCOOTERMODE_PROP").second.trim() }.getOrNull()
+        if (v != null) {
+            prefs.edit().putString("scootermode_original", v).apply()
+            log("[*] Captured stock scootermode '${v.ifBlank { "unset" }}' (saved for revert).")
+        }
+    }
+
+    /** True if a stock scootermode value has been captured and can be restored. */
+    fun canRestoreStock(): Boolean = prefs.getString("scootermode_original", null) != null
+
+    /**
+     * Restores MoveOS to its stock persistent state: puts `scootermode` back to the captured
+     * value and removes the temporary ADB key material from `/data/local/tmp`. Runs over gRPC
+     * (no ADB needed), mirroring `setup.py --revert`. A reboot then clears the in-RAM key bind
+     * (re-locking ADB). Installed mods are left in place — remove them separately if desired.
+     * Returns true if a captured stock value was applied.
+     */
+    suspend fun restoreStockState(): Boolean = withContext(Dispatchers.IO) {
+        val client = ensureGrpc()
+        log("[*] Restoring MoveOS to its stock persistent state...")
+        val orig = prefs.getString("scootermode_original", null)
+        if (orig != null) {
+            if (orig.isNotBlank()) client.shell("setprop $SCOOTERMODE_PROP $orig")
+            else client.shell("setprop $SCOOTERMODE_PROP ''")
+            log("[+] scootermode restored to stock: '${orig.ifBlank { "unset" }}'.")
+        } else {
+            log("[!] No captured stock scootermode on this phone; not guessing a security value.")
+        }
+        runCatching { client.shell("rm -f /data/local/tmp/adb_keys_mine /data/local/tmp/bind_key.sh") }
+        log("[i] Reboot the scooter to clear the in-RAM ADB key (ADB re-locks). Safe for OTA.")
+        orig != null
     }
 
     // ---- Mod health dashboard --------------------------------------------------

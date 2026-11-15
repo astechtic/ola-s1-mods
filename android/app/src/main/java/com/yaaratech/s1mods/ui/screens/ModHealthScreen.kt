@@ -50,6 +50,7 @@ fun ModHealthScreen(manager: ScooterManager) {
     var isLoading by remember { mutableStateOf(false) }
     var busyAction by remember { mutableStateOf<String?>(null) }
     var backups by remember { mutableStateOf<List<File>>(emptyList()) }
+    var showRevertConfirm by remember { mutableStateOf(false) }
 
     fun refresh() {
         if (!isConnected) return
@@ -186,7 +187,46 @@ fun ModHealthScreen(manager: ScooterManager) {
             onRestore = { file -> runNamedAction("restore") { manager.restoreModState(file) } }
         )
 
+        // Restore stock MoveOS state (reverts the one persistent change; safe for OTA/handover)
+        RestoreStockCard(
+            canRestore = manager.canRestoreStock(),
+            busy = busyAction == "revert",
+            onRevert = { showRevertConfirm = true }
+        )
+
         Spacer(modifier = Modifier.height(8.dp))
+    }
+
+    if (showRevertConfirm) {
+        AlertDialog(
+            onDismissRequest = { showRevertConfirm = false },
+            icon = { Icon(Icons.Default.Restore, contentDescription = null, tint = TextPrimary) },
+            title = { Text("Restore stock state?", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary) },
+            text = {
+                Text(
+                    "This puts MoveOS's one persistent setting (scooter mode) back to the stock " +
+                        "value captured before setup, and removes the temporary ADB key files. " +
+                        "Reboot the scooter afterwards to re-lock ADB. Installed mods are left in " +
+                        "place — remove those separately if you want. Use this before an Ola OTA or handover.",
+                    fontSize = 12.sp, color = TextSecondary, lineHeight = 17.sp
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showRevertConfirm = false
+                        runNamedAction("revert") { manager.restoreStockState() }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = AccentMint, contentColor = BgDark),
+                    shape = RoundedCornerShape(8.dp)
+                ) { Text("Restore", fontWeight = FontWeight.SemiBold, fontSize = 13.sp) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRevertConfirm = false }) { Text("Cancel", color = TextSecondary) }
+            },
+            containerColor = SurfaceDark,
+            shape = RoundedCornerShape(12.dp)
+        )
     }
 }
 
@@ -372,6 +412,45 @@ private fun ModHealthCard(
                             Text("Install & grant", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RestoreStockCard(canRestore: Boolean, busy: Boolean, onRevert: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(1.dp, CardBorder, RoundedCornerShape(12.dp)),
+        colors = CardDefaults.cardColors(containerColor = SurfaceDark),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(modifier = Modifier.padding(14.dp)) {
+            Text("Restore stock state", fontSize = 11.sp, fontWeight = FontWeight.Medium, color = TextMuted)
+            Text(
+                "Reverts the one persistent MoveOS change (scooter mode) and removes the temporary ADB key. Run before an Ola OTA or handover; reboot after to re-lock ADB.",
+                fontSize = 11.sp, color = TextMuted, lineHeight = 15.sp
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+            OutlinedButton(
+                onClick = onRevert,
+                enabled = !busy && canRestore,
+                modifier = Modifier.fillMaxWidth().height(40.dp),
+                shape = RoundedCornerShape(8.dp),
+                border = BorderStroke(1.dp, CardBorder),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = TextPrimary)
+            ) {
+                if (busy) {
+                    CircularProgressIndicator(modifier = Modifier.size(14.dp), color = TextPrimary, strokeWidth = 2.dp)
+                } else {
+                    Icon(Icons.Default.Restore, contentDescription = null, modifier = Modifier.size(15.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        if (canRestore) "Restore stock state (safe for OTA)" else "No stock value captured yet",
+                        fontSize = 12.sp, fontWeight = FontWeight.SemiBold
+                    )
                 }
             }
         }
