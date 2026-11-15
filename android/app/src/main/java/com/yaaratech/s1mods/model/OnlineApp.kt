@@ -22,11 +22,12 @@ object OnlineAppCatalog {
         id = "openplay_carplay",
         displayName = "OpenPlay",
         packageName = "com.yaaratech.openplay",
-        downloadUrl = "https://storage.googleapis.com/publish-apk/openplay-olas1-release.apk",
+        downloadUrl = "https://github.com/astechtic/ola-s1-mods/releases/download/v1.0.0/openplay-olas1-release.apk",
         fileName = "openplay-olas1-release.apk",
         description = "Phone-projection mod for the S1 display (CarPlay-compatible). Fork of DiPlay. 'CarPlay' is a trademark of Apple Inc.; not affiliated.",
         sizeText = "18.2 MB",
-        tag = "Projection"
+        tag = "Projection",
+        sha256 = "ee13c8c592f1d5408917bf51d7f88783eca4f4a913f71725c9cf3ee8e9976a00"
     )
 
     val apps = listOf(

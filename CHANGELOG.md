@@ -1,4 +1,9 @@
-## [Unreleased] — Open-source ecosystem
+## [1.0.0] - 2026-11-15 — Open-source ecosystem (first public `yaaratech` release)
+
+First end-to-end open-source release: the S1Mods app (`com.yaaratech.s1mods` v1.0.0) plus all
+four companion mods building from source, a symmetric install/uninstall flow, MoveOS-safety
+guardrails with `--revert`, CI + a device-free test suite, and illustrated docs. Release APKs
+(app + 4 mods + `SHA256SUMS`) are attached to the `v1.0.0` GitHub Release.
 
 ### 📖 Full open-source transparency
 * **Multi-license repo:** added canonical `LICENSES/` (GPL-3.0, AGPL-3.0),

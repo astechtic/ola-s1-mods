@@ -27,22 +27,54 @@ Full walkthrough: **[docs/ECOSYSTEM.md](docs/ECOSYSTEM.md)**.
 
 ---
 
-## ⚡ Quick Start: Android App (Recommended - No PC Needed)
+## 📋 Full setup guide (Ola S1 / S1 Pro / S1 Air / S1X)
 
-1. Turn on **Personal Hotspot** on your Android phone.
-2. On your scooter display, go to **Settings > Wi-Fi** and connect to your phone's hotspot.
-3. Install and open [`S1Mods-v1.2.apk`](S1Mods-v1.2.apk) on your phone.
-4. Tap **Scan** *(allow Location permission when prompted — Android requires this to scan local devices)*. If auto-scan is blocked by your phone's security, copy the scooter's **MAC or IP** from **Hotspot > Connected Devices** and paste it via the **Edit (✏️)** button.
-5. Ensure the scooter's **side stand is UP** and screen is awake.
-6. Tap **1-CLICK AUTOMATED SETUP** — within seconds, navigation controls and music mod are installed!
+> **Before you start**
+> - Works on an Ola S1 head unit running **MoveOS 4.0.5 or newer** (the head unit is Android under the hood).
+> - Park the scooter, put the **side stand UP** (lowering it triggers MoveOS auto-lock), and keep the **display awake** during setup.
+> - Everything is reversible and never writes the system partition — see **[docs/SAFETY.md](docs/SAFETY.md)**.
 
----
+### Option A — Phone only, no PC *(recommended)*
 
-## 💻 Alternative Quick Start: Windows PC
+**1. Put the phone and scooter on the same network.**
+   - On your **Android phone**, turn on **Personal Hotspot**.
+   - On the **scooter display**: **Settings → Wi‑Fi → connect to your phone's hotspot**.
+   *(Any shared Wi‑Fi works too, as long as both devices are on it.)*
 
-1. **Same Wi-Fi Network:** Connect PC and Scooter to the same Wi-Fi or phone hotspot.
-2. **Scooter Awake:** Side stand UP, screen active.
-3. Run **`setup.bat`** in the repository root.
+**2. Install the S1Mods app on your phone.**
+   - Download **[`S1Mods-v1.0.0.apk`](https://github.com/astechtic/ola-s1-mods/releases/latest)** from the latest release (or the copy in this repo), then open it to install.
+   - Allow installing from unknown sources if your phone asks.
+
+**3. Connect to the scooter.**
+   - Open **S1Mods** → grant the **Location / Nearby‑devices** permission (Android requires it to find the scooter on the network).
+   - Tap **Auto Scan**. When it finds the scooter the status pill turns **🟢 Connected** and shows your model + MoveOS version.
+   - If auto‑scan is blocked by your phone, tap **Manual** and paste the scooter's **IP or MAC** (find it on the scooter under **Settings → Wi‑Fi → (your network)**, or on your phone under **Hotspot → Connected devices**).
+
+**4. Install the mods.**
+   - Go to the **Setup** tab → **Install Mod** for the 1‑click flow (detect → in‑RAM ADB unlock → install → grant permissions → return to dashboard), **or**
+   - Go to the **Apps** tab (App Manager) and tap **Install** on each mod you want (Balls, Music Mod, Android Auto, OpenPlay).
+
+**5. Use them.** The mods appear on the scooter's app list. Tap the floating **Balls** button for Back / Home / Settings; open **Music Mod**, **OpenPlay**, or **Android Auto** from the dashboard.
+
+### Option B — From a computer (Windows / macOS / Linux)
+
+```bash
+# same network + side stand up + screen awake, then:
+python setup.py                 # discover → unlock ADB → install mods → grant
+python setup.py --uninstall     # cleanly remove every mod (reverts grants first)
+python setup.py --revert        # restore stock MoveOS state before an OTA / handover
+```
+Windows users can double‑click **`setup.bat`**. macOS/Linux users can run **`./setup.sh`**. The tool needs `adb` (Android platform‑tools) on PATH; it installs its one Python dependency itself.
+
+### Managing & removing
+
+| Goal | Phone app | PC |
+| --- | --- | --- |
+| Uninstall a mod (reverts its permissions first) | App Manager → **Uninstall** | `python setup.py --uninstall [pkg…]` |
+| Restore stock state **before an Ola OTA** | — | `python setup.py --revert`, then reboot the scooter |
+| Fully revert | Uninstall all mods | `python setup.py --uninstall --revert`, then reboot |
+
+Uninstalling is symmetric with install (it undoes exactly what install did), and the tool **refuses to touch MoveOS / system apps**, so it can't break the scooter or its updates. A reboot clears the in‑RAM ADB key on its own.
 
 ---
 
@@ -64,7 +96,7 @@ Watch the modded infotainment interface and floating touch navigation running li
 
 ## ✨ Key Features
 
-* 📲 **All-in-One Android App (`S1Mods`):** Complete standalone Android application to auto-detect your scooter over a phone hotspot, unlock ADB, install bundled mod APKs, capture screenshots, and open settings directly from your phone — **zero PC required!** Located in [`android/`](android/) and pre-compiled as [`S1Mods-v1.2.apk`](S1Mods-v1.2.apk).
+* 📲 **All-in-One Android App (`S1Mods`):** Complete standalone Android application to auto-detect your scooter over a phone hotspot, unlock ADB, install bundled mod APKs, capture screenshots, and open settings directly from your phone — **zero PC required!** Located in [`android/`](android/) and pre-compiled as [`S1Mods-v1.0.0.apk`](S1Mods-v1.0.0.apk).
 * 🔍 **Zero-Config Auto-Discovery & Hotspot Helper:** Automatically scans IPv6 link-local multicast and local hotspot subnets. Includes an instant MAC-to-IPv6 converter using SLAAC EUI-64 standards.
 * 🛡️ **Zero Power-Manager Tampering (Safe Auto-Lock):** Does **NOT** alter the system power manager or force persistent stay-on. Your scooter's built-in auto-lock and anti-theft security remain 100% untouched.
 * 🔓 **Safe & Reversible In-Memory ADB Unlock:** Authorizes ADB over TCP port 5555 using a temporary RAM bind-mount (`mount --bind`). No system, vendor, or boot partitions are ever modified.

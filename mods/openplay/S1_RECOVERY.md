@@ -54,11 +54,12 @@ source build — correct both legally (the MFi assets are Apple's, not ours to r
 and per the project's "functional equivalence, not bit-identity" principle.
 
 ## Distribution
-Currently the S1Mods app **downloads** OpenPlay at runtime (not bundled) from
-`https://storage.googleapis.com/publish-apk/openplay-olas1-release.apk`. `apks/manifest.json`
-now pins that download's SHA-256 so `setup.py` / `ApkDownloader` verify it before install
-(previously unverified). **Target (Phase 6 CI):** republish a from-source signed build to
-GitHub Releases and repoint `downloadUrl` + `sha256`.
+OpenPlay is **downloaded** at runtime (not bundled, to keep the app APK small) from this
+repo's own GitHub Release — a from-source `com.yaaratech.openplay` build hosted at
+`.../releases/download/v1.0.0/openplay-olas1-release.apk`. `apks/manifest.json` and the app's
+`OnlineApp` catalog pin its SHA-256, so `setup.py` / `ApkDownloader` verify it before install.
+(It originally came from a third-party GCS bucket serving the pre-rebrand build; that
+dependency is now gone.)
 
 ## Content/legal note (document, user's decision)
 A CarPlay receiver interoperates with Apple's protocol; trademark ("CarPlay is a trademark of

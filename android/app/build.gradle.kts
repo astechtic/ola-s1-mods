@@ -27,8 +27,8 @@ android {
         applicationId = "com.yaaratech.s1mods"
         minSdk = 26
         targetSdk = 35
-        versionCode = 5
-        versionName = "1.2"
+        versionCode = 10
+        versionName = "1.0.0"
 
         vectorDrawables.useSupportLibrary = true
 

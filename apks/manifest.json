@@ -78,10 +78,10 @@
       "fileName": "openplay-olas1-release.apk",
       "versionName": "1.0.1",
       "versionCode": 42,
-      "sha256": "14237a5194bc6d084687492a67b82ab28ecf730481acbfc9d87570e8994cdeed",
-      "sizeBytes": 19043886,
+      "sha256": "ee13c8c592f1d5408917bf51d7f88783eca4f4a913f71725c9cf3ee8e9976a00",
+      "sizeBytes": 19041997,
       "distribution": "download",
-      "downloadUrl": "https://storage.googleapis.com/publish-apk/openplay-olas1-release.apk",
+      "downloadUrl": "https://github.com/astechtic/ola-s1-mods/releases/download/v1.0.0/openplay-olas1-release.apk",
       "upstream": "https://github.com/shihabal3amri/DiPlay",
       "upstreamPin": "v0.2.22",
       "license": "GPL-3.0",
@@ -98,7 +98,7 @@
           "android.permission.BLUETOOTH_CONNECT"
         ]
       },
-      "_todo": "REBRAND CAVEAT: the source in mods/openplay is now com.yaaratech.openplay, but the hosted downloadUrl below still serves the ORIGINAL author's com.asjohn720.openplay build (the only one hosted). The sha256/downloadUrl pin that legacy binary so it still verifies on download; packageName/grants here describe the intended yaaratech build. To finish: build mods/openplay (com.yaaratech.openplay), host it (GitHub Releases), then update downloadUrl + sha256. Until then, a download installs the legacy id and these grants will not match it."
+      "_note": "Built from mods/openplay (com.yaaratech.openplay) and hosted on this repo's v1.0.0 GitHub Release. Downloaded at runtime (not bundled) to keep the app APK small; verified by the sha256 above before install."
     }
   ]
 }
