@@ -49,16 +49,17 @@
       "displayName": "OpenPlay",
       "packageName": "com.asjohn720.openplay",
       "fileName": "openplay-olas1-release.apk",
-      "versionName": null,
-      "versionCode": null,
-      "sha256": null,
-      "sizeBytes": null,
+      "versionName": "1.0.1",
+      "versionCode": 42,
+      "sha256": "14237a5194bc6d084687492a67b82ab28ecf730481acbfc9d87570e8994cdeed",
+      "sizeBytes": 19043886,
       "distribution": "download",
       "downloadUrl": "https://storage.googleapis.com/publish-apk/openplay-olas1-release.apk",
       "upstream": "https://github.com/shihabal3amri/DiPlay",
+      "upstreamPin": "v0.2.22",
       "license": "GPL-3.0",
       "source": "mods/openplay",
-      "_todo": "Replace downloadUrl with a GitHub Releases asset and fill sha256/versionName/versionCode once rebuilt from source."
+      "_todo": "Source is now vendored+rebranded in mods/openplay and build-verified. Phase 6 CI: republish a from-source signed build to GitHub Releases, then repoint downloadUrl + refresh sha256. The sha256 above pins the CURRENT GCS download so setup.py/ApkDownloader verify it (previously unverified)."
     }
   ]
 }
