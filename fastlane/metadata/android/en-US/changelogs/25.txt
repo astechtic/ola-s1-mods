@@ -1,0 +1,4 @@
+- Added themes
+- New connector styles
+- Border on/off switch
+- Live preview in settings
