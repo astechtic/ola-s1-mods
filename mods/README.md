@@ -5,7 +5,7 @@ shipped only as compiled APKs; this directory makes them fully open and reproduc
 
 | Dir | App | applicationId | Upstream (pin) | License | Build state |
 | --- | --- | --- | --- | --- | --- |
-| `balls` | Balls (floating nav) | `com.asjohn720.ball` | QuickBall v6.1.0 | GPL-3.0-or-later | **vendored + rebranded** (build check pending — see `balls/S1_RECOVERY.md`) |
+| `balls` | Balls (floating nav) | `com.asjohn720.ball` | QuickBall v6.1.0 | GPL-3.0-or-later | **vendored + rebranded + builds ✅** (foss flavor; see `balls/S1_RECOVERY.md`) |
 | `openplay` | OpenPlay (projection) | `com.asjohn720.openplay` | DiPlay | GPL-3.0 | source pending (Phase 3) |
 | `music` | Music Mod | `com.asjohn720.musicmod` | Square 2.8.0 | GPL-3.0-or-later | source pending (Phase 4) |
 | `androidauto` | Android Auto | `com.asjohn720.androidauto` | open-headunit 4.0.0-beta2 | AGPL-3.0 | source pending (Phase 5) |

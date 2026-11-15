@@ -17,9 +17,14 @@ rebrand, not a code rewrite.
   `com.asjohn720.ball.core.QuickBallService` — exactly what the S1Mods installer grants
   (`AdbManager.grantBallPermissions` / `setup.py`).
 
-## Still to do (needs an Android build to verify)
-- [ ] **Build check**: `cd mods/balls && ./gradlew assembleRelease` — confirm the rename
-      compiles (this repo could not run Gradle). Fix any missed reference.
+## Build: VERIFIED ✅
+`./gradlew :app:assembleDebug` succeeds (Gradle 9.4.1, JDK 25, AGP via wrapper). Output
+`com.asjohn720.ball` labelled **Balls**. The project has two flavors — use **`foss`**
+(`assembleFossRelease`) for open-source distribution; `play` pulls Google Play/billing deps.
+
+## Still to do
+- [ ] Prefer the **foss** flavor for the shipped APK; wire release signing via
+      `keystore.properties` (mirror `android/`), then `assembleFossRelease`.
 - [ ] **Version**: currently inherits upstream `6.1.0 (25)`. Decide whether to keep that or
       reset to an S1 scheme; only `applicationId` matters to the installer.
 - [ ] **S1 feature deltas** seen in the shipped build / CHANGELOG 1.2, to re-apply as commits
