@@ -14,11 +14,11 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.shihab.diplay"
+        applicationId = "com.asjohn720.openplay"
         minSdk = 24
         targetSdk = 37
-        versionCode = 41
-        versionName = "0.2.22"
+        versionCode = 42
+        versionName = "1.0.1"
 
     }
 
