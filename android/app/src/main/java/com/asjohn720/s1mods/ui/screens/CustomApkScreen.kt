@@ -646,7 +646,7 @@ fun CustomApkScreen(manager: ScooterManager) {
                             downloadStatusText = "Connecting..."
                             manager.log("[*] Downloading ${carPlayApp.displayName} (${carPlayApp.sizeText})...")
                             try {
-                                ApkDownloader.download(carPlayApp.downloadUrl, carPlayFile) { fraction, readBytes, totalBytes ->
+                                ApkDownloader.download(carPlayApp.downloadUrl, carPlayFile, carPlayApp.sha256) { fraction, readBytes, totalBytes ->
                                     downloadProgress = if (fraction >= 0f) fraction else 0f
                                     val readMb = String.format("%.1f", readBytes / (1024.0 * 1024.0))
                                     val totalMb = if (totalBytes > 0) String.format("%.1f MB", totalBytes / (1024.0 * 1024.0)) else "unknown"
@@ -773,7 +773,7 @@ fun CustomApkScreen(manager: ScooterManager) {
                                 downloadStatusText = "Connecting..."
                                 manager.log("[*] Downloading ${onlineApp.displayName} (${onlineApp.sizeText}) from archive...")
                                 try {
-                                    ApkDownloader.download(onlineApp.downloadUrl, localFile) { fraction, readBytes, totalBytes ->
+                                    ApkDownloader.download(onlineApp.downloadUrl, localFile, onlineApp.sha256) { fraction, readBytes, totalBytes ->
                                         downloadProgress = if (fraction >= 0f) fraction else 0f
                                         val readMb = String.format("%.1f", readBytes / (1024.0 * 1024.0))
                                         val totalMb = if (totalBytes > 0) String.format("%.1f MB", totalBytes / (1024.0 * 1024.0)) else "unknown"

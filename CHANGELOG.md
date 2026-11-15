@@ -1,3 +1,26 @@
+## [Unreleased] — Open-source ecosystem
+
+### 📖 Full open-source transparency
+* **Multi-license repo:** added canonical `LICENSES/` (GPL-3.0, AGPL-3.0),
+  `THIRD_PARTY_NOTICES.md`, and per-mod `LICENSE` files. The MIT license now explicitly
+  covers only the S1Mods app and tooling; each companion app keeps its upstream (A)GPL license.
+* **`mods/` tree:** scaffolding to rebuild all four companion apps from their open-source
+  upstreams (QuickBall, Square, open-headunit, DiPlay), with per-app `RECOVERY.md` delta
+  reports recovered from the shipped APKs.
+
+### 🏗️ Build & tooling
+* **Single APK source of truth:** bundled mod APKs moved to top-level `apks/` with
+  `apks/manifest.json` (package, version, SHA-256, upstream, license). Gradle now copies them
+  into assets at build time — no more duplicate committed binaries.
+* **Real release signing:** `android/` reads a release keystore from `keystore.properties` /
+  CI env vars (falls back to debug with a warning). See `docs/BUILD.md`.
+* **Integrity checks:** `setup.py` and the in-app downloader verify APK SHA-256 before install.
+* **Cross-platform setup:** `setup.py` now scans on macOS (`ndp`) and Linux (`ip -6 neigh`)
+  as well as Windows; added `setup.sh` launcher. ADB unlock now reports real success/failure
+  instead of always printing success.
+
+---
+
 ## [1.2.0] - 2026-11-08
 
 ### 🚗 Vehicle Projection Mods Added

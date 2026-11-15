@@ -56,7 +56,7 @@ Watch the modded infotainment interface and floating touch navigation running li
 * 🔓 **Safe & Reversible In-Memory ADB Unlock:** Authorizes ADB over TCP port 5555 using a temporary RAM bind-mount (`mount --bind`). No system, vendor, or boot partitions are ever modified.
 * 📱 **Floating Touch Navigation Controls:** Installs **Balls** to provide essential touch buttons (Back, Home, Settings) directly on the infotainment display.
 * 🎵 **Offline & Streaming Music Player:** Installs **Music Mod**, giving you ad-free music playback directly from the dash.
-* 📦 **Pre-Bundled Local APKs:** Modded application packages are pre-bundled in `apks/` (`balls-1.0.0-lite-release.apk` and `musicmod-release.apk`) for instant, offline installation with zero external dependencies.
+* 📦 **Pre-Bundled Local APKs:** Modded application packages live in [`apks/`](apks/) (`balls-1.1.0-lite-release.apk`, `musicmod-release.apk`, `com.asjohn720.androidauto.apk`) with an [`apks/manifest.json`](apks/manifest.json) recording each package, version, SHA-256, upstream and license — for instant, offline, integrity-checked installation. Their source is rebuilt from upstream under [`mods/`](mods/).
 * 🛠️ **Automated Permission Grants:** Grants `SYSTEM_ALERT_WINDOW` (overlay), `WRITE_SETTINGS`, and Android Accessibility Services via ADB without manual prompt tapping.
 * 🎯 **1-Click Execution:** Run via Android App or double-click `setup.bat` on PC.
 * 🐍 **Direct Root Controller (`ola.py`):** Includes a standalone, weakly-typed gRPC root control script to inspect vehicle properties, open settings, take screenshots, or execute root shell commands.
@@ -158,15 +158,29 @@ python ola.py interactive --ipv6 fe80::1234:5678:9abc:def0%22
 
 ```
 ola-s1-mods/
-├── android/               # S1Mods Standalone Android Application
-├── .gitignore             # Standard Git ignore rules
-├── LICENSE                # MIT License with research & safety disclaimer
+├── android/               # S1Mods standalone Android application (source)
+├── mods/                  # Open-source companion apps, built from upstream forks
+│   ├── balls/             #   QuickBall fork       (GPL-3.0-or-later)
+│   ├── music/             #   Square fork          (GPL-3.0-or-later)
+│   ├── androidauto/       #   open-headunit fork   (AGPL-3.0)
+│   └── openplay/          #   DiPlay fork          (GPL-3.0)
+├── apks/                  # Mod APKs (single source of truth) + manifest.json
+├── docs/                  # BUILD and other guides
+├── LICENSES/              # Canonical GPL-3.0 / AGPL-3.0 texts + license matrix
 ├── ola.py                 # Pure Python gRPC root communication engine
-├── README.md              # Project documentation & user guide
+├── setup.py               # Automated discovery, unlock, verify & install engine
+├── setup.bat / setup.sh   # 1-click launchers (Windows / macOS-Linux)
 ├── requirements.txt       # Python dependencies (grpcio)
-├── setup.bat              # 1-Click Windows launcher
-└── setup.py               # Automated discovery, unlock, and installation engine
+├── test_ola.py            # Protocol/address unit checks
+├── CHANGELOG.md
+├── THIRD_PARTY_NOTICES.md # Upstream attribution for the four forks
+├── LICENSE                # MIT (covers android/ and the Python tooling only)
+└── .gitignore
 ```
+
+> **Licensing:** S1Mods is a **multi-license** repo. The MIT `LICENSE` covers only the
+> S1Mods app and tooling; each app under `mods/` keeps its upstream (A)GPL license. See
+> [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) and [`LICENSES/`](LICENSES/).
 
 ---
 

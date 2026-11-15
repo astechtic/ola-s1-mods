@@ -14,9 +14,10 @@ dist/
 downloads/*.apk
 downloads/*.zip
 *.apk
+# Mod APKs are tracked only in the top-level apks/ (single source of truth).
+# Gradle copies them into a generated assets dir at build time; that copy stays ignored.
+!apks/*.apk
 !S1Mods*.apk
-!android/app/src/main/assets/*.apk
-!android/app/src/main/assets/
 *.img
 .env
 .venv
@@ -32,6 +33,11 @@ example for repo prepare/
 *.key
 *.pub
 /data/local/tmp/
+
+# Release signing secrets (never commit)
+keystore.properties
+*.jks
+*.keystore
 
 # OS generated files
 Thumbs.db

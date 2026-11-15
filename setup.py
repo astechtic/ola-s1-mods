@@ -12,7 +12,10 @@ Automates:
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
 import os
+import platform
 import re
 import shutil
 import socket
@@ -46,6 +49,40 @@ def print_step(num: int, title: str):
     print(f"\n[{num}/6] {title}")
     print("-" * 60)
 
+def _repo_dir() -> str:
+    return os.path.dirname(os.path.abspath(__file__))
+
+def load_apk_manifest() -> dict:
+    """Loads apks/manifest.json (the single source of truth for mod APKs)."""
+    path = os.path.join(_repo_dir(), "apks", "manifest.json")
+    try:
+        with open(path, encoding="utf-8") as fh:
+            return json.load(fh)
+    except Exception as e:
+        print(f"[!] Could not read {path}: {e}")
+        return {"apks": []}
+
+def sha256_file(path: str) -> str:
+    h = hashlib.sha256()
+    with open(path, "rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+def verify_apk(path: str, expected_sha256: str | None) -> bool:
+    """Returns True if the file matches the expected SHA-256. No expected hash -> skip (warn)."""
+    if not expected_sha256:
+        print(f"    [!] No pinned SHA-256 for {os.path.basename(path)}; skipping verification.")
+        return True
+    actual = sha256_file(path)
+    if actual.lower() == expected_sha256.lower():
+        print(f"    [+] Verified {os.path.basename(path)} (SHA-256 OK).")
+        return True
+    print(f"    [!] SHA-256 MISMATCH for {os.path.basename(path)}!")
+    print(f"        expected {expected_sha256}")
+    print(f"        actual   {actual}")
+    return False
+
 def find_adb() -> str:
     """Finds adb executable path on the system."""
     found = shutil.which("adb")
@@ -76,28 +113,42 @@ def test_tcp_port6(ip: str, port: int, scope: int | None, timeout: float = 0.8) 
     except Exception:
         return False
 
-def scan_for_scooter() -> tuple[str, int] | None:
-    """Pings multicast and scans IPv6 neighbors for open port 50005."""
-    print("[*] Pinging local IPv6 multicast to discover network devices...")
-    
-    # Get active interfaces
+def _probe_candidates(candidates: list[tuple[str, int]]) -> tuple[str, int] | None:
+    """Tries port 50005 on each (ip, scope) candidate; returns the first that answers."""
+    seen = set()
+    for ip, scope in candidates:
+        key = (ip, scope)
+        if key in seen:
+            continue
+        seen.add(key)
+        print(f"    Checking {ip}%{scope} ...", end="", flush=True)
+        if test_tcp_port6(ip, 50005, scope):
+            print(" [OPEN] -> Found Ola Scooter!")
+            return ip, scope
+        print(" [closed]")
+    return None
+
+def _iface_index(name: str) -> int:
+    try:
+        return socket.if_nametoindex(name)
+    except Exception:
+        return 0
+
+def _scan_windows() -> tuple[str, int] | None:
     ps_cmd = 'Get-NetAdapter | Where-Object { $_.Status -eq "Up" } | Select-Object -ExpandProperty InterfaceIndex'
     try:
         proc = subprocess.run(["powershell", "-NoProfile", "-Command", ps_cmd], capture_output=True, text=True)
         indices = [int(x.strip()) for x in proc.stdout.splitlines() if x.strip().isdigit()]
     except Exception:
         indices = []
-
     for idx in indices:
-        subprocess.run(f"ping -6 -n 1 -w 300 ff02::1%{idx}", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run(f"ping -6 -n 1 -w 300 ff02::1%{idx}", shell=True,
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     time.sleep(0.5)
-
-    print("[*] Scanning IPv6 neighbor table for Ola Head Unit (Port 50005)...")
     try:
         out = subprocess.check_output("netsh interface ipv6 show neighbors", text=True, stderr=subprocess.DEVNULL)
     except Exception:
         out = ""
-
     current_idx = None
     candidates = []
     for line in out.splitlines():
@@ -108,15 +159,76 @@ def scan_for_scooter() -> tuple[str, int] | None:
             parts = line.split()
             if len(parts) >= 3 and parts[2].lower() != "unreachable":
                 candidates.append((parts[0], current_idx))
+    return _probe_candidates(candidates)
 
-    for ip, scope in candidates:
-        print(f"    Checking {ip}%{scope} ...", end="", flush=True)
-        if test_tcp_port6(ip, 50005, scope):
-            print(" [OPEN] -> Found Ola Scooter!")
-            return ip, scope
-        else:
-            print(" [closed]")
+def _active_unix_ifaces() -> list[str]:
+    """Best-effort list of up, non-loopback interface names on macOS/Linux."""
+    names: list[str] = []
+    try:
+        # Works on both macOS and Linux
+        out = subprocess.check_output(["ifconfig"], text=True, stderr=subprocess.DEVNULL)
+        for blk in re.split(r"\n(?=\S)", out):
+            m = re.match(r"(\w+):", blk)
+            if m and "LOOPBACK" not in blk and ("UP" in blk or "RUNNING" in blk):
+                names.append(m.group(1))
+    except Exception:
+        pass
+    if not names:
+        try:
+            out = subprocess.check_output(["ip", "-o", "link", "show", "up"], text=True, stderr=subprocess.DEVNULL)
+            for line in out.splitlines():
+                m = re.search(r"\d+:\s+([^:@]+)", line)
+                if m and m.group(1) != "lo":
+                    names.append(m.group(1).strip())
+        except Exception:
+            pass
+    return names
 
+def _scan_unix() -> tuple[str, int] | None:
+    ifaces = _active_unix_ifaces()
+    # Nudge the neighbor table via multicast ping on each interface.
+    for name in ifaces:
+        subprocess.run(["ping6", "-c", "1", f"ff02::1%{name}"],
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run(["ping", "-6", "-c", "1", f"ff02::1%{name}"],
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    time.sleep(0.5)
+
+    candidates: list[tuple[str, int]] = []
+    # macOS: `ndp -an`  -> "fe80::...%en0   <mac>   en0 ..."
+    try:
+        out = subprocess.check_output(["ndp", "-an"], text=True, stderr=subprocess.DEVNULL)
+        for line in out.splitlines():
+            m = re.match(r"(fe80::[0-9a-fA-F:]+)%(\w+)", line.strip())
+            if m:
+                candidates.append((m.group(1), _iface_index(m.group(2))))
+    except Exception:
+        pass
+    # Linux: `ip -6 neigh` -> "fe80::... dev wlan0 lladdr <mac> REACHABLE"
+    if not candidates:
+        try:
+            out = subprocess.check_output(["ip", "-6", "neigh"], text=True, stderr=subprocess.DEVNULL)
+            for line in out.splitlines():
+                m = re.match(r"(fe80::[0-9a-fA-F:]+)\s+dev\s+(\w+)", line.strip())
+                if m and "FAILED" not in line:
+                    candidates.append((m.group(1), _iface_index(m.group(2))))
+        except Exception:
+            pass
+    return _probe_candidates(candidates)
+
+def scan_for_scooter() -> tuple[str, int] | None:
+    """Pings IPv6 multicast and scans the neighbor table for open port 50005.
+
+    Cross-platform: Windows (netsh), macOS (ndp), Linux (ip -6 neigh).
+    """
+    print("[*] Pinging local IPv6 multicast to discover network devices...")
+    print("[*] Scanning IPv6 neighbor table for Ola Head Unit (Port 50005)...")
+    system = platform.system()
+    if system == "Windows":
+        return _scan_windows()
+    if system in ("Darwin", "Linux"):
+        return _scan_unix()
+    print(f"[!] Automatic scan not supported on {system}. Use --ipv6 / Manual Mode.")
     return None
 
 def pre_setup_wake(channel):
@@ -167,21 +279,42 @@ echo "bound $T"
 
     device = f"[{ipv6}%{scope}]:5555" if scope else f"[{ipv6}]:5555"
     print(f"[*] Connecting ADB to {device}...")
-    subprocess.run([adb_exe, "connect", device], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    time.sleep(1.0)
-    
-    # Verify state
-    res = subprocess.run([adb_exe, "-s", device, "get-state"], capture_output=True, text=True)
-    if "device" not in res.stdout:
+
+    # Retry the connect a few times and verify the real device state before claiming success.
+    connected = False
+    for attempt in range(1, 4):
         subprocess.run([adb_exe, "connect", device], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         time.sleep(1.0)
-    print("    [+] ADB connected successfully as 'device'!")
+        res = subprocess.run([adb_exe, "-s", device, "get-state"], capture_output=True, text=True)
+        if "device" in res.stdout:
+            connected = True
+            break
+        print(f"    [*] ADB not ready (attempt {attempt}/3): {res.stdout.strip() or res.stderr.strip() or 'no state'}")
+
+    if not connected:
+        raise SystemExit(
+            "[!] ADB authorization failed: device did not reach 'device' state on "
+            f"{device}.\n"
+            "    The in-memory key bind may not have taken. Check that the scooter screen is\n"
+            "    awake and that port 5555 is reachable, then re-run. (Nothing persistent was\n"
+            "    changed; a vehicle restart clears the temporary key mount.)")
+
+    print("    [+] ADB connected and verified as 'device'.")
     return device
 
 def install_and_grant(device: str, adb_exe: str, apks: dict[str, str]):
     """Installs bundled APKs and grants necessary Android permissions."""
+    # Pinned SHA-256 per filename, from apks/manifest.json.
+    sha_by_name = {
+        a.get("fileName"): a.get("sha256")
+        for a in load_apk_manifest().get("apks", [])
+    }
+
     def safe_install(apk_path: str, app_name: str):
         print(f"[*] Installing {app_name} ({os.path.basename(apk_path)})...")
+        if not verify_apk(apk_path, sha_by_name.get(os.path.basename(apk_path))):
+            print(f"    [!] REFUSING to install {app_name}: integrity check failed.")
+            return
         res = subprocess.run([adb_exe, "-s", device, "install", "-r", "-d", apk_path], capture_output=True, text=True)
         combined = (res.stdout + " " + res.stderr).strip()
         if "Success" in combined:

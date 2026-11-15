@@ -12,7 +12,9 @@ data class OnlineApp(
     val description: String,
     val sizeText: String,
     val tag: String? = null,
-    val isHeavyRam: Boolean = false
+    val isHeavyRam: Boolean = false,
+    /** Expected SHA-256 of the downloaded APK (lowercase hex). Null = not pinned yet (skip verify). */
+    val sha256: String? = null
 )
 
 object OnlineAppCatalog {
