@@ -232,10 +232,9 @@ ola-s1-mods/
 
 ## 👨‍💻 Author & Contact
 
-* **Anand ([@Yaaratech](https://github.com/Yaaratech))** — Network discovery, device connection workflow, Android app architecture, and project packaging.
-  - 🌐 **GitHub:** [@Yaaratech](https://github.com/Yaaratech)
-  - 🐦 **X (Twitter):** [@yaaratech](https://x.com/yaaratech)
-  - 📸 **Instagram:** [@yaaratech.exe](https://www.instagram.com/yaaratech.exe)
+* **Astechtic ([@astechtic](https://github.com/astechtic))** — Network discovery, device connection workflow, Android app architecture, and project packaging.
+  - 🌐 **GitHub:** [@astechtic](https://github.com/astechtic)
+  - 💼 **LinkedIn:** [Astechtic](https://www.linkedin.com/company/astechtic)
 
 ### 🤝 Acknowledgments & Credits
 

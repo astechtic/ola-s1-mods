@@ -172,14 +172,13 @@ fun ConnectVehicleScreen(
             title = { Text("S1Mods", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("By Anand (@yaaratech)", fontSize = 13.sp, color = TextSecondary)
+                    Text("By Astechtic (@astechtic)", fontSize = 13.sp, color = TextSecondary)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        SocialButton("GitHub", "https://github.com/Yaaratech", context, modifier = Modifier.weight(1f))
-                        SocialButton("X", "https://x.com/yaaratech", context, modifier = Modifier.weight(1f))
-                        SocialButton("Instagram", "https://www.instagram.com/yaaratech.exe", context, modifier = Modifier.weight(1f))
+                        SocialButton("GitHub", "https://github.com/astechtic", context, modifier = Modifier.weight(1f))
+                        SocialButton("LinkedIn", "https://www.linkedin.com/company/astechtic", context, modifier = Modifier.weight(1f))
                     }
                     Text("MIT License. Unofficial, not affiliated with Ola Electric. 'Ola' and 'MoveOS' are trademarks of Ola Electric; 'S1' is used descriptively.", fontSize = 11.sp, color = TextMuted, lineHeight = 15.sp)
                 }
