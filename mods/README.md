@@ -8,7 +8,7 @@ shipped only as compiled APKs; this directory makes them fully open and reproduc
 | `balls` | Balls (floating nav) | `com.asjohn720.ball` | QuickBall v6.1.0 | GPL-3.0-or-later | **vendored + rebranded + builds ✅** (foss flavor; see `balls/S1_RECOVERY.md`) |
 | `openplay` | OpenPlay (projection) | `com.asjohn720.openplay` | DiPlay v0.2.22 | GPL-3.0 | **vendored + rebranded + builds ✅** (`:mobile`, signs; see `openplay/S1_RECOVERY.md`) |
 | `music` | Music Mod | `com.asjohn720.musicmod` | Square v2.8.0 | GPL-3.0-or-later | **vendored + rebranded + builds ✅** (`:app`, Rust core, signs; see `music/S1_RECOVERY.md`) |
-| `androidauto` | Android Auto | `com.asjohn720.androidauto` | open-headunit 4.0.0-beta2 | AGPL-3.0 | source pending (Phase 5) |
+| `androidauto` | Android Auto | `com.asjohn720.androidauto` | open-headunit v.4.0.0-beta2 | AGPL-3.0 | **vendored + rebranded + builds ✅** (`github` flavor, C++/NDK, signs; see `androidauto/S1_RECOVERY.md`) |
 
 ## How each fork is reconstructed
 No original fork source existed, so each is rebuilt **from its upstream**, not from the
