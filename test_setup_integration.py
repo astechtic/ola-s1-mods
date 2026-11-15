@@ -89,6 +89,21 @@ def test_install_grant_then_uninstall_is_clean_and_preserves_foreign_service():
         # that revoke_mod reset them to "default" first is covered by test_flow.py.
 
 
+def test_refuses_to_uninstall_moveos_system_package():
+    """The guard must never let a non-mod (MoveOS/system) package be removed."""
+    setup = _load_setup()
+    with tempfile.TemporaryDirectory() as tmp:
+        state = os.path.join(tmp, "device.json")
+        json.dump(
+            {"packages": ["com.olaelectric.hmiclient", BALL], "secure": {}, "appops": {}, "perms": {}},
+            open(state, "w"),
+        )
+        adb = _make_fake_adb(tmp, state)
+        setup.uninstall_mods("fake-0", adb, ["com.olaelectric.hmiclient"])
+        pkgs = _read_state(state)["packages"]
+        assert "com.olaelectric.hmiclient" in pkgs, "MoveOS HMI app was uninstalled — guard failed!"
+
+
 def test_uninstall_skips_packages_not_installed():
     setup = _load_setup()
     with tempfile.TemporaryDirectory() as tmp:

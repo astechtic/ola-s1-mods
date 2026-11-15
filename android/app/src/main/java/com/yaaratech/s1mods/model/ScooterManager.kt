@@ -380,8 +380,33 @@ class ScooterManager(private val context: Context) {
      * *then* `pm uninstall` — so nothing is left dangling. A package with no registered
      * spec is simply stopped and uninstalled.
      */
+    /**
+     * True for packages the tool must never uninstall or disable: MoveOS / Ola vehicle
+     * apps and the Android/OEM system stack. Guards every destructive package action so the
+     * scooter's own software and its OTA pipeline stay intact.
+     */
+    private fun isProtectedPackage(packageName: String): Boolean {
+        val pkg = packageName.trim()
+        val protectedPrefixes = listOf(
+            "com.olaelectric", "com.ola.",            // MoveOS HMI + Ola vehicle/diagnostic apps
+            "android", "com.android.",                 // Android framework & system apps
+            "com.google.android.", "com.qualcomm.",    // GMS / SoC vendor
+            "com.sec.", "com.samsung.", "org.lineageos.",
+        )
+        return pkg.isEmpty() ||
+            pkg == "android" ||
+            protectedPrefixes.any { pkg == it.trimEnd('.') || pkg.startsWith(it) }
+    }
+
     suspend fun uninstallPackage(packageName: String): String = withContext(Dispatchers.IO) {
         log("[*] Uninstalling $packageName...")
+        // SAFETY: never let the tool remove a MoveOS / Android system / vehicle app. Only
+        // user-installed packages can be uninstalled, so a bad value cannot brick the scooter
+        // or break its OTA pipeline.
+        if (isProtectedPackage(packageName)) {
+            log("[!] REFUSED: '$packageName' is a protected system/MoveOS package and will not be touched.")
+            return@withContext "Refused: protected system package"
+        }
         ensureAdb()
         val spec = ModRegistry.byPackage(packageName)
         if (spec != null) {

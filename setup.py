@@ -239,6 +239,73 @@ def pre_setup_wake(channel):
     import time
     time.sleep(0.5)
 
+# --- MoveOS state: capture & restore -------------------------------------------------
+# The ONLY persistent change this tool makes to MoveOS is the scootermode property that
+# ADB unlock needs. Everything else (the ADB key bind-mount, installed mod APKs in /data)
+# is either RAM-only (cleared by a reboot) or ordinary user-app state. We capture the
+# stock scootermode before touching it so `--revert` can restore the vehicle exactly, and
+# so a future Ola OTA sees the original state. The system partition is never written.
+SCOOTERMODE_PROP = "persist.ola.security.scootermode"
+_STATE_FILE = os.path.expanduser("~/.ola_s1_state.json")
+
+
+def _save_state(updates: dict):
+    state = {}
+    if os.path.exists(_STATE_FILE):
+        try:
+            with open(_STATE_FILE) as fh:
+                state = json.load(fh)
+        except Exception:
+            state = {}
+    state.update(updates)
+    state["updated"] = time.strftime("%Y-%m-%dT%H:%M:%S")
+    try:
+        with open(_STATE_FILE, "w") as fh:
+            json.dump(state, fh, indent=2)
+    except Exception as exc:
+        print(f"    [!] Could not save local state ({exc}); --revert may need a manual value.")
+
+
+def _load_state() -> dict:
+    try:
+        with open(_STATE_FILE) as fh:
+            return json.load(fh)
+    except Exception:
+        return {}
+
+
+def _read_scootermode(channel) -> str:
+    _, out = ola.run(channel, f"getprop {SCOOTERMODE_PROP}", quiet=True)
+    return (out or "").strip()
+
+
+def restore_stock_state(channel):
+    """Undo the one persistent change: restore the captured stock scootermode and remove
+    the temporary ADB key material. Use this before an Ola OTA or before handing the
+    vehicle on. A reboot additionally clears the in-RAM key bind-mount (re-locking ADB).
+    """
+    state = _load_state()
+    print("[*] Restoring MoveOS to its stock persistent state...")
+    if "scootermode_original" in state:
+        orig = state["scootermode_original"]
+        if orig:
+            ola.run(channel, f"setprop {SCOOTERMODE_PROP} {orig}", quiet=True)
+            print(f"    [+] scootermode restored to its captured stock value: '{orig}'.")
+        else:
+            # Stock value was unset; clearing it is the faithful restore.
+            ola.run(channel, f"setprop {SCOOTERMODE_PROP} ''", quiet=True)
+            print("    [+] scootermode cleared back to its stock (unset) state.")
+    else:
+        current = _read_scootermode(channel)
+        print(f"    [!] No captured stock value on this PC (current is '{current or 'unset'}').")
+        print("        Not guessing a security value. If you know the stock value, set it with:")
+        print(f"        python ola.py shell \"setprop {SCOOTERMODE_PROP} <value>\" --ipv6 ...")
+    ola.run(channel, "rm -f /data/local/tmp/adb_keys_mine /data/local/tmp/bind_key.sh", quiet=True)
+    print("    [+] Removed the uploaded ADB key and bind script from /data/local/tmp.")
+    print("    [i] Reboot the scooter to clear the in-RAM key bind-mount (ADB re-locks).")
+    print("    [i] Installed mod apps are left in place; remove them with 'setup.py --uninstall'.")
+
+
 def unlock_adb(channel, ipv6: str, scope: int | None, adb_exe: str) -> str:
     """Safely unlocks ADB via RAM bind mount without flashing partitions."""
     print("[*] Preparing ADB key...")
@@ -253,8 +320,13 @@ def unlock_adb(channel, ipv6: str, scope: int | None, adb_exe: str) -> str:
     ola.push(channel, adb_pub, "/data/local/tmp/adb_keys_mine")
     ola.run(channel, "chmod 644 /data/local/tmp/adb_keys_mine", quiet=True)
 
-    print("    Setting scootermode=serv...")
-    ola.run(channel, "setprop persist.ola.security.scootermode serv", quiet=True)
+    # Capture the stock scootermode BEFORE changing it so it can be restored exactly
+    # (keeps MoveOS integrity intact and lets a future Ola OTA see the original state).
+    original_mode = _read_scootermode(channel)
+    _save_state({"scootermode_original": original_mode})
+    print(f"    Stock scootermode is '{original_mode or 'unset'}' (saved for --revert); "
+          "setting 'serv' to enable ADB...")
+    ola.run(channel, f"setprop {SCOOTERMODE_PROP} serv", quiet=True)
 
     bind_script = """#!/system/bin/sh
 if [ -f /data/misc/adb/adbkeymoveos3_pub_prod ]; then
@@ -296,8 +368,9 @@ echo "bound $T"
             "[!] ADB authorization failed: device did not reach 'device' state on "
             f"{device}.\n"
             "    The in-memory key bind may not have taken. Check that the scooter screen is\n"
-            "    awake and that port 5555 is reachable, then re-run. (Nothing persistent was\n"
-            "    changed; a vehicle restart clears the temporary key mount.)")
+            "    awake and that port 5555 is reachable, then re-run. (The key bind-mount is\n"
+            "    RAM-only and a reboot clears it. The one persistent change — scootermode —\n"
+            "    was captured first and can be rolled back with 'setup.py --revert'.)")
 
     print("    [+] ADB connected and verified as 'device'.")
     return device
@@ -433,11 +506,21 @@ def install_and_grant(device: str, adb_exe: str, apks: dict[str, str]):
 
 
 def uninstall_mods(device: str, adb_exe: str, packages: list[str]):
-    """Cleanly removes mods: revert each one's grant contract, THEN `pm uninstall`."""
+    """Cleanly removes mods: revert each one's grant contract, THEN `pm uninstall`.
+
+    SAFETY: only ever removes packages that are declared mods in apks/manifest.json.
+    Anything else — a MoveOS/system/vehicle app — is refused, so a typo or a bad
+    argument can never damage the scooter's own software or its OTA pipeline.
+    """
+    known = set(all_mod_packages())
     grants_by_pkg = {a.get("packageName"): (a.get("grants") or {}) for a in _manifest_apks()}
     present = _installed_packages(adb_exe, device)
     any_done = False
     for pkg in packages:
+        if pkg not in known:
+            print(f"[!] REFUSING to uninstall {pkg}: not a known S1Mods mod "
+                  f"(allowed: {', '.join(sorted(known))}).")
+            continue
         if pkg not in present:
             print(f"[*] {pkg} is not installed; skipping.")
             continue
@@ -469,6 +552,13 @@ def main():
         "--uninstall", nargs="*", metavar="PKG",
         help="Uninstall mods (revert grants, then remove) instead of installing. "
              "With no package names, removes every mod listed in apks/manifest.json.",
+    )
+    parser.add_argument(
+        "--revert", action="store_true",
+        help="Restore the scooter to its stock persistent state (the captured scootermode) "
+             "and remove the temporary ADB key. Run before an Ola OTA or handover. Does not "
+             "need ADB; a reboot afterwards re-locks ADB. Mod apps stay unless you also pass "
+             "--uninstall.",
     )
     args = parser.parse_args()
 
@@ -525,6 +615,16 @@ def main():
     print_step(3, "Waking Screen & Pre-Flight Check")
     pre_setup_wake(channel)
 
+    # Revert path: restore stock MoveOS state over gRPC (no ADB needed) and exit.
+    if args.revert and args.uninstall is None:
+        print_step(4, "Restoring Stock MoveOS State")
+        restore_stock_state(channel)
+        print("\n" + "=" * 72)
+        print("           MOVEOS RESTORED TO STOCK — SAFE FOR OTA / HANDOVER           ")
+        print("=" * 72)
+        print("[i] Reboot the scooter now to clear the in-RAM ADB key bind-mount.")
+        return
+
     # Step 4: Unlock ADB
     print_step(4, "Unlocking ADB Access")
     device = unlock_adb(channel, ipv6, scope, adb_exe)
@@ -535,10 +635,15 @@ def main():
         targets = args.uninstall or all_mod_packages()
         print(f"[*] Targets: {', '.join(targets)}")
         uninstall_mods(device, adb_exe, targets)
+        if args.revert:
+            print_step(6, "Restoring Stock MoveOS State")
+            restore_stock_state(channel)
         print("\n" + "=" * 72)
         print("              MODS UNINSTALLED & SETTINGS REVERTED              ")
         print("=" * 72)
         print("[+] Scooter display is back on your Speedometer Dashboard.")
+        if args.revert:
+            print("[+] MoveOS restored to stock; reboot to re-lock ADB. Safe for OTA.")
         return
 
     # Step 5: Verify Bundled APKs

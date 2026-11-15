@@ -32,6 +32,19 @@
   from source on a tag, signs each from CI secrets, writes `SHA256SUMS`, and publishes a
   GitHub Release with build-provenance attestation. Added `test_manifest.py`, `test_flow.py`.
 
+### 🛡️ MoveOS safety, reversibility & OTA compatibility
+* **Nothing persistent left behind, by design:** the only persistent MoveOS change (the
+  `scootermode` property needed for ADB) is now **captured before it's changed** and restored
+  exactly by a new `setup.py --revert`. The ADB key is a RAM bind-mount (cleared by a reboot);
+  mods live in `/data`; the system partition is never written. Run `--revert` (and reboot)
+  before an Ola OTA or handover — see the corrected, accurate messaging.
+* **Guardrail against touching the vehicle's own software:** `setup.py --uninstall` only acts
+  on packages listed in the manifest, and the app's uninstall path refuses MoveOS/Ola/Android
+  system packages outright — a typo can never remove `com.olaelectric.hmiclient` or a system
+  app. Covered by tests.
+* **New `docs/SAFETY.md`** documenting exactly what is touched, its persistence, OTA
+  compatibility, integrity verification, and responsible-use limits.
+
 ### 🔁 Proper install / uninstall flow
 * **Symmetric, data-driven grants:** install and uninstall now read one per-mod contract
   (the `grants` block in `apks/manifest.json`, mirrored by `ModRegistry` in the app), so
