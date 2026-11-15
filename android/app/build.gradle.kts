@@ -16,7 +16,7 @@ val hasReleaseKeystore = keystorePropsFile.exists() ||
     System.getenv("S1MODS_KEYSTORE_FILE") != null
 
 android {
-    namespace = "com.asjohn720.s1mods"
+    namespace = "com.yaaratech.s1mods"
     compileSdk {
         version = release(37) {
             minorApiLevel = 1
@@ -24,7 +24,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.asjohn720.s1mods"
+        applicationId = "com.yaaratech.s1mods"
         minSdk = 26
         targetSdk = 35
         versionCode = 5
@@ -33,7 +33,7 @@ android {
         vectorDrawables.useSupportLibrary = true
 
         // GitHub repo that holds the public Releases used for update checks.
-        buildConfigField("String", "GIT_OWNER", "\"Asjohn720\"")
+        buildConfigField("String", "GIT_OWNER", "\"Yaaratech\"")
         buildConfigField("String", "GIT_REPO", "\"ola-s1-mods\"")
     }
 
@@ -137,9 +137,9 @@ dependencies {
 // assets dir (registered as an assets srcDir above). Keeps a single source of truth
 // and avoids committing duplicate binaries under src/main/assets.
 val bundledModApks = listOf(
-    "balls-1.1.0-lite-release.apk",
+    "balls-release.apk",
     "musicmod-release.apk",
-    "com.asjohn720.androidauto.apk",
+    "com.yaaratech.androidauto.apk",
 )
 
 val syncModApks by tasks.registering(Copy::class) {

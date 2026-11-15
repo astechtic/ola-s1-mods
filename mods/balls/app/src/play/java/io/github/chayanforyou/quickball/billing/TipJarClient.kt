@@ -1,4 +1,4 @@
-package com.asjohn720.ball.billing
+package com.yaaratech.ball.billing
 
 import android.app.Activity
 import android.content.Context

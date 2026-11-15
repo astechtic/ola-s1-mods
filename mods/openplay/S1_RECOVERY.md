@@ -10,7 +10,7 @@ treated as untrusted data) decompiled to:
 
 | Field | Shipped APK | DiPlay v0.2.22 upstream |
 | --- | --- | --- |
-| applicationId | `com.asjohn720.openplay` | `com.shihab.diplay` |
+| applicationId | `com.yaaratech.openplay` | `com.shihab.diplay` |
 | versionCode | `42` | `41` (**+1**) |
 | versionName | `1.0.1` | `0.2.22` |
 | code namespace | `com.shilapi.xcertplay` | `com.shilapi.xcertplay` (**same**) |
@@ -22,7 +22,7 @@ upstream + 1. So OpenPlay is an **applicationId/branding rebrand of DiPlay v0.2.
 code fork.
 
 ## Rebrand applied in this repo (vs upstream)
-- `applicationId`: `com.shihab.diplay` → **`com.asjohn720.openplay`** (`mobile/build.gradle.kts`).
+- `applicationId`: `com.shihab.diplay` → **`com.yaaratech.openplay`** (`mobile/build.gradle.kts`).
   `namespace` stays `com.shilapi.xcertplay` (as the shipped APK proves).
 - `versionCode` 41 → **42**, `versionName` "0.2.22" → **"1.0.1"** (match the shipped build).
 - `app_name` string → **"OpenPlay"** (all locale `strings.xml` in `mobile/` and `common/`).
@@ -32,7 +32,7 @@ Built with the vendored Gradle wrapper (9.5.0; a cached 9.6.0 was used locally d
 sandbox download block — behaviour is identical). Module `:mobile` is the app.
 - `:mobile:assembleDebug` → full APK (debug variant carries upstream's `.hudtest`
   applicationIdSuffix + "DiPlay HUD Test" label — a debug-only source set).
-- `:mobile:assembleRelease` with a release keystore → **`com.asjohn720.openplay`**,
+- `:mobile:assembleRelease` with a release keystore → **`com.yaaratech.openplay`**,
   versionCode 42, versionName 1.0.1, label **OpenPlay**, launcher
   `com.shilapi.xcertplay.DiPlayActivity` — an exact match to the shipped APK. The
   `:shared` NDK native libs (arm64-v8a, armeabi-v7a, x86, x86_64) build from source too.

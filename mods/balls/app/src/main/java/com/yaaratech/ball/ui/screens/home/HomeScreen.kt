@@ -1,0 +1,537 @@
+package com.yaaratech.ball.ui.screens.home
+
+import android.content.Context
+import android.content.Intent
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.keyframes
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.core.net.toUri
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.yaaratech.ball.BuildConfig
+import com.yaaratech.ball.R
+import com.yaaratech.ball.core.QuickBallService
+import com.yaaratech.ball.ui.components.AppSwitch
+import com.yaaratech.ball.ui.screens.home.components.AppRatingDialog
+import com.yaaratech.ball.ui.screens.home.components.DokiBottomSheet
+import com.yaaratech.ball.ui.screens.home.components.LanguageSelectionBottomSheet
+import com.yaaratech.ball.ui.screens.home.components.SettingNavigationRow
+import com.yaaratech.ball.ui.screens.home.components.SettingSwitchRow
+import com.yaaratech.ball.ui.screens.home.components.SupportBottomSheet
+import com.yaaratech.ball.ui.theme.AppCardDefaults
+import com.yaaratech.ball.ui.theme.CookieFontFamily
+import com.yaaratech.ball.ui.viewmodels.QuickBallViewModel
+import com.yaaratech.ball.utils.AppRater
+import com.yaaratech.ball.utils.PermissionUtils
+import kotlin.math.PI
+import kotlin.math.sin
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HomeScreen(
+    onNavigateToShortcuts: () -> Unit,
+    onNavigateToAutoHide: () -> Unit,
+    onNavigateToAdvanced: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: QuickBallViewModel = viewModel()
+) {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    var showLanguageSheet by remember { mutableStateOf(false) }
+    var showDokiSheet by remember { mutableStateOf(false) }
+    var showSupportSheet by remember { mutableStateOf(false) }
+    var showRateDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        AppRater.initAppRater(context) {
+            showRateDialog = true
+        }
+    }
+
+    if (showSupportSheet) {
+        SupportBottomSheet(onDismissRequest = {
+            showSupportSheet = false
+        })
+    }
+
+    if (showLanguageSheet) {
+        LanguageSelectionBottomSheet(onDismissRequest = {
+            showLanguageSheet = false
+        })
+    }
+
+    if (showDokiSheet) {
+        DokiBottomSheet(onDismissRequest = {
+            showDokiSheet = false
+        })
+    }
+
+    if (showRateDialog) {
+        AppRatingDialog(
+            onDismissRequest = {
+                showRateDialog = false
+                AppRater.remindLater(context)
+            },
+            onRate = {
+                showRateDialog = false
+                AppRater.openPlayStore(context)
+            },
+            onEmail = {
+                showRateDialog = false
+                AppRater.openEmail(context)
+            }
+        )
+    }
+
+    val isAccessibilityGranted = uiState.isAccessibilityGranted
+    val isQuickBallEnabled = uiState.isQuickBallEnabled
+    val lockBallPosition = uiState.lockBallPosition
+    val showOnLockScreen = uiState.showOnLockScreen
+    val hideOnLandscape = uiState.hideOnLandscape
+    val stickToEdge = uiState.stickToEdge
+
+    fun refreshPermissionsState() {
+        val hasAccessibility = PermissionUtils.isAccessibilityServiceEnabled(context)
+        viewModel.refreshPermissionsState(hasAccessibility)
+
+        val action = if (hasAccessibility && isQuickBallEnabled) {
+            QuickBallService.ACTION_ENABLE
+        } else {
+            QuickBallService.ACTION_DISABLE
+        }
+        controlQuickBallService(context, action)
+    }
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                refreshPermissionsState()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
+    Scaffold(
+        modifier = modifier,
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = stringResource(R.string.home_title),
+                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                },
+                actions = {
+                    IconButton(onClick = { showLanguageSheet = true }) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_language),
+                            contentDescription = stringResource(R.string.language_title)
+                        )
+                    }
+                    IconButton(onClick = { showDokiSheet = true }) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_battery_restriction),
+                            contentDescription = stringResource(R.string.remove_battery_restriction)
+                        )
+                    }
+                    IconButton(onClick = {
+                        val intent = Intent(
+                            Intent.ACTION_VIEW,
+                            "https://github.com/chayanforyou/QuickBall".toUri()
+                        )
+                        context.startActivity(intent)
+                    }) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_github),
+                            contentDescription = stringResource(R.string.github_repository)
+                        )
+                    }
+                }
+            )
+        },
+        bottomBar = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(horizontal = 16.dp)
+            ) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = AppCardDefaults.cardColors()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "v${BuildConfig.VERSION_NAME}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
+                        val attention = rememberAttentionBurst()
+
+                        // Surface is light in light theme and dark in dark theme, the opposite of the button
+                        val buttonColor = MaterialTheme.colorScheme.primary
+                        val shimmerColor = MaterialTheme.colorScheme.surface.copy(alpha = SHIMMER_ALPHA)
+
+                        Surface(
+                            onClick = { showSupportSheet = true },
+                            modifier = Modifier.graphicsLayer {
+                                // Single soft pop per burst
+                                val scale = 1f + POP_SCALE * sin(attention.value * PI.toFloat())
+                                scaleX = scale
+                                scaleY = scale
+                            },
+                            shape = RoundedCornerShape(12.dp),
+                            color = buttonColor
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .shimmerSweep(attention, shimmerColor)
+                                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_coffee),
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.inverseOnSurface,
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .graphicsLayer {
+                                            // Wiggle that settles by the end of the burst
+                                            val progress = attention.value
+                                            rotationZ = WIGGLE_DEGREES * (1f - progress) *
+                                                    sin(progress * 4f * PI.toFloat())
+                                        },
+                                )
+                                Text(
+                                    text = stringResource(R.string.support_me),
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontFamily = CookieFontFamily,
+                                        fontSize = 14.sp,
+                                    ),
+                                    color = MaterialTheme.colorScheme.inverseOnSurface,
+                                    fontWeight = FontWeight.Normal
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 16.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Accessibility Setup Card (shown at top if accessibility is OFF)
+            if (!isAccessibilityGranted) {
+                AccessibilitySetupCard(
+                    onOpenSettingsClick = { PermissionUtils.openAccessibilitySettings(context) }
+                )
+            }
+
+            // Main Service Toggle Card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                colors = AppCardDefaults.cardColors()
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(R.string.enable_quick_ball),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                    AppSwitch(
+                        checked = isQuickBallEnabled,
+                        enabled = isAccessibilityGranted,
+                        onCheckedChange = { checked ->
+                            viewModel.setQuickBallEnabled(checked)
+                            controlQuickBallService(
+                                context,
+                                if (checked) QuickBallService.ACTION_ENABLE else QuickBallService.ACTION_DISABLE
+                            )
+                        }
+                    )
+                }
+            }
+
+            // Standalone "Settings" Header
+            Text(
+                text = stringResource(R.string.settings_label),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 4.dp, top = 4.dp)
+            )
+
+            // Settings Card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = AppCardDefaults.cardColors()
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    SettingNavigationRow(
+                        title = stringResource(R.string.shortcuts_title),
+                        onClick = onNavigateToShortcuts
+                    )
+
+                    SettingNavigationRow(
+                        title = stringResource(R.string.hide_automatically_title),
+                        subtitle = stringResource(R.string.hide_automatically_description),
+                        onClick = onNavigateToAutoHide
+                    )
+
+                    SettingSwitchRow(
+                        title = stringResource(R.string.lock_ball_position_title),
+                        checked = lockBallPosition,
+                        onCheckedChange = { checked ->
+                            viewModel.setLockBallPosition(checked)
+                        }
+                    )
+
+                    SettingSwitchRow(
+                        title = stringResource(R.string.stick_to_edge_title),
+                        checked = stickToEdge,
+                        onCheckedChange = { checked ->
+                            viewModel.setStickToEdge(checked)
+                            controlQuickBallService(
+                                context,
+                                if (checked) QuickBallService.ACTION_STASH else QuickBallService.ACTION_UNSTASH
+                            )
+                        }
+                    )
+
+                    SettingSwitchRow(
+                        title = stringResource(R.string.show_on_lock_screen_title),
+                        checked = showOnLockScreen,
+                        onCheckedChange = { checked ->
+                            viewModel.setShowOnLockScreen(checked)
+                        }
+                    )
+
+                    SettingSwitchRow(
+                        title = stringResource(R.string.hide_on_landscape_title),
+                        checked = hideOnLandscape,
+                        onCheckedChange = { checked ->
+                            viewModel.setHideOnLandscape(checked)
+                        }
+                    )
+                }
+            }
+
+            // Advanced Settings
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = AppCardDefaults.cardColors()
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onNavigateToAdvanced() }
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(R.string.advanced_settings_title),
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AccessibilitySetupCard(
+    onOpenSettingsClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = AppCardDefaults.cardColors()
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.turn_on_quick_ball),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Normal,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            Text(
+                text = stringResource(R.string.accessibility_setup_description),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                lineHeight = 20.sp
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Button(
+                onClick = onOpenSettingsClick,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.open_accessibility_settings),
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(vertical = 4.dp)
+                )
+            }
+        }
+    }
+}
+
+private fun controlQuickBallService(context: Context, action: String) {
+    context.startService(
+        Intent(context, QuickBallService::class.java).apply {
+            this.action = action
+        }
+    )
+}
+
+private const val ATTENTION_CYCLE_MS = 3600
+private const val ATTENTION_BURST_MS = 1300
+private const val POP_SCALE = 0.06f
+private const val WIGGLE_DEGREES = 16f
+private const val SHIMMER_ALPHA = 0.18f
+private const val SHIMMER_WIDTH_FRACTION = 0.45f
+
+/**
+ * Progress of a short attention burst that repeats with a pause in between:
+ * runs 0 to 1 during the burst, then rests at 1 until the next cycle.
+ */
+@Composable
+private fun rememberAttentionBurst(): State<Float> {
+    val transition = rememberInfiniteTransition(label = "attention")
+    return transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = keyframes {
+                durationMillis = ATTENTION_CYCLE_MS
+                0f at 0 using FastOutSlowInEasing
+                1f at ATTENTION_BURST_MS
+                1f at ATTENTION_CYCLE_MS
+            }
+        ),
+        label = "attentionBurst"
+    )
+}
+
+/**
+ * Slanted light band that sweeps across the content once per burst.
+ */
+private fun Modifier.shimmerSweep(
+    progress: State<Float>,
+    color: Color
+): Modifier = drawWithContent {
+    drawContent()
+
+    val bandWidth = size.width * SHIMMER_WIDTH_FRACTION
+    val start = -bandWidth + progress.value * (size.width + bandWidth)
+    if (start >= size.width) return@drawWithContent
+
+    drawRect(
+        brush = Brush.linearGradient(
+            colors = listOf(color.copy(alpha = 0f), color, color.copy(alpha = 0f)),
+            start = Offset(start, 0f),
+            end = Offset(start + bandWidth, size.height)
+        )
+    )
+}

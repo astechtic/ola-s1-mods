@@ -41,7 +41,7 @@ def _requires_grpc():
 def test_connect_and_info_roundtrip():
     if not _requires_grpc():
         return
-    device = FakeAndroid({"packages": ["com.asjohn720.ball"], "secure": {}, "appops": {}, "perms": {}})
+    device = FakeAndroid({"packages": ["com.yaaratech.ball"], "secure": {}, "appops": {}, "perms": {}})
     server, port, _ = fake_wifican.start(device)
     try:
         channel = ola.connect(f"127.0.0.1:{port}", wait=5.0)
@@ -64,7 +64,7 @@ def test_shell_wrapped_command_roundtrip():
     try:
         channel = ola.connect(f"127.0.0.1:{port}", wait=5.0)
         # Enable an accessibility service through the wrapped-shell path, then read it back.
-        svc = "com.asjohn720.ball/com.asjohn720.ball.core.QuickBallService"
+        svc = "com.yaaratech.ball/com.yaaratech.ball.core.QuickBallService"
         ola.run(channel, ola.sh_wrap(f"settings put secure enabled_accessibility_services {svc}"), quiet=True)
         status, out = ola.run(channel, ola.sh_wrap("settings get secure enabled_accessibility_services"), quiet=True)
         assert ola.ok(status)

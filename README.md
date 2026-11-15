@@ -56,7 +56,7 @@ Watch the modded infotainment interface and floating touch navigation running li
 * 🔓 **Safe & Reversible In-Memory ADB Unlock:** Authorizes ADB over TCP port 5555 using a temporary RAM bind-mount (`mount --bind`). No system, vendor, or boot partitions are ever modified.
 * 📱 **Floating Touch Navigation Controls:** Installs **Balls** to provide essential touch buttons (Back, Home, Settings) directly on the infotainment display.
 * 🎵 **Offline & Streaming Music Player:** Installs **Music Mod**, giving you ad-free music playback directly from the dash.
-* 📦 **Pre-Bundled Local APKs:** Modded application packages live in [`apks/`](apks/) (`balls-1.1.0-lite-release.apk`, `musicmod-release.apk`, `com.asjohn720.androidauto.apk`) with an [`apks/manifest.json`](apks/manifest.json) recording each package, version, SHA-256, upstream and license — for instant, offline, integrity-checked installation. Their source is rebuilt from upstream under [`mods/`](mods/).
+* 📦 **Pre-Bundled Local APKs:** Modded application packages live in [`apks/`](apks/) (`balls-1.1.0-lite-release.apk`, `musicmod-release.apk`, `com.yaaratech.androidauto.apk`) with an [`apks/manifest.json`](apks/manifest.json) recording each package, version, SHA-256, upstream and license — for instant, offline, integrity-checked installation. Their source is rebuilt from upstream under [`mods/`](mods/).
 * 🛠️ **Automated Permission Grants:** Grants `SYSTEM_ALERT_WINDOW` (overlay), `WRITE_SETTINGS`, and Android Accessibility Services via ADB without manual prompt tapping.
 * 🎯 **1-Click Execution:** Run via Android App or double-click `setup.bat` on PC.
 * 🐍 **Direct Root Controller (`ola.py`):** Includes a standalone, weakly-typed gRPC root control script to inspect vehicle properties, open settings, take screenshots, or execute root shell commands.
@@ -186,10 +186,10 @@ ola-s1-mods/
 
 ## 👨‍💻 Author & Contact
 
-* **Anand ([@Asjohn720](https://github.com/Asjohn720))** — Network discovery, device connection workflow, Android app architecture, and project packaging.
-  - 🌐 **GitHub:** [@Asjohn720](https://github.com/Asjohn720)
-  - 🐦 **X (Twitter):** [@asjohn720](https://x.com/asjohn720)
-  - 📸 **Instagram:** [@asjohn720.exe](https://www.instagram.com/asjohn720.exe)
+* **Anand ([@Yaaratech](https://github.com/Yaaratech))** — Network discovery, device connection workflow, Android app architecture, and project packaging.
+  - 🌐 **GitHub:** [@Yaaratech](https://github.com/Yaaratech)
+  - 🐦 **X (Twitter):** [@yaaratech](https://x.com/yaaratech)
+  - 📸 **Instagram:** [@yaaratech.exe](https://www.instagram.com/yaaratech.exe)
 
 ### 🤝 Acknowledgments & Credits
 

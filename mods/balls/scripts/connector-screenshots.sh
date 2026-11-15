@@ -27,7 +27,7 @@
 
 set -euo pipefail
 
-PKG="com.asjohn720.ball"
+PKG="com.yaaratech.ball"
 SERVICE="$PKG/$PKG.core.QuickBallService"
 PREFS="shared_prefs/quick_ball_prefs.xml"
 

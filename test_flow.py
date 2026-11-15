@@ -14,7 +14,7 @@ import sys
 import types
 
 _REPO = os.path.dirname(os.path.abspath(__file__))
-BALL = "com.asjohn720.ball/com.asjohn720.ball.core.QuickBallService"
+BALL = "com.yaaratech.ball/com.yaaratech.ball.core.QuickBallService"
 
 
 def _load_setup():

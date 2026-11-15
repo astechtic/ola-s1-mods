@@ -5,19 +5,19 @@
     {
       "id": "balls",
       "displayName": "Balls Navigation",
-      "packageName": "com.asjohn720.ball",
-      "fileName": "balls-1.1.0-lite-release.apk",
-      "versionName": "1.1.0-lite",
-      "versionCode": 2,
-      "sha256": "8cb9cac563867a9db4c0ea5ce785e1d96a483f19228e17114c37c1eddee43d80",
-      "sizeBytes": 1467388,
+      "packageName": "com.yaaratech.ball",
+      "fileName": "balls-release.apk",
+      "versionName": "6.1.0",
+      "versionCode": 25,
+      "sha256": "3021eb84a36c2477bcd682c0837714f4ce8a1b42a9b4295116780a6d2da4beff",
+      "sizeBytes": 1673679,
       "distribution": "bundled",
       "upstream": "https://github.com/chayanforyou/QuickBall",
       "license": "GPL-3.0-or-later",
       "source": "mods/balls",
       "grants": {
-        "launchActivity": "com.asjohn720.ball/.ui.MainActivity",
-        "accessibilityService": "com.asjohn720.ball/com.asjohn720.ball.core.QuickBallService",
+        "launchActivity": "com.yaaratech.ball/.ui.MainActivity",
+        "accessibilityService": "com.yaaratech.ball/com.yaaratech.ball.core.QuickBallService",
         "appops": ["SYSTEM_ALERT_WINDOW", "WRITE_SETTINGS"],
         "permissions": []
       }
@@ -25,12 +25,12 @@
     {
       "id": "music",
       "displayName": "Music Mod",
-      "packageName": "com.asjohn720.musicmod",
+      "packageName": "com.yaaratech.musicmod",
       "fileName": "musicmod-release.apk",
       "versionName": "2.8.0",
       "versionCode": 62,
-      "sha256": "fe800c091868448e1048743b8853fb10bbe1dbcb02a9504799406b6b159870e0",
-      "sizeBytes": 18263307,
+      "sha256": "7d6257d93e82944c2e67c3597b3e4c29e02e3eda7da2655fd9ffc5da92e13636",
+      "sizeBytes": 26602311,
       "distribution": "bundled",
       "upstream": "https://github.com/Lelonio/Square",
       "license": "GPL-3.0-or-later",
@@ -45,12 +45,12 @@
     {
       "id": "androidauto",
       "displayName": "Android Auto",
-      "packageName": "com.asjohn720.androidauto",
-      "fileName": "com.asjohn720.androidauto.apk",
+      "packageName": "com.yaaratech.androidauto",
+      "fileName": "com.yaaratech.androidauto.apk",
       "versionName": "4.0.0-beta2",
       "versionCode": 122,
-      "sha256": "e7b276bb971833965517ff94b14ca38a25a38c3f75f6f1164bcbb166d13f22a0",
-      "sizeBytes": 20946937,
+      "sha256": "5c96ca28160010da751375e859da0089be54c24c930aba180f7421fd7e6da6c2",
+      "sizeBytes": 28808635,
       "distribution": "bundled",
       "upstream": "https://github.com/andreknieriem/open-headunit",
       "license": "AGPL-3.0",
@@ -74,7 +74,7 @@
     {
       "id": "openplay",
       "displayName": "OpenPlay",
-      "packageName": "com.asjohn720.openplay",
+      "packageName": "com.yaaratech.openplay",
       "fileName": "openplay-olas1-release.apk",
       "versionName": "1.0.1",
       "versionCode": 42,
@@ -98,7 +98,7 @@
           "android.permission.BLUETOOTH_CONNECT"
         ]
       },
-      "_todo": "Source is now vendored+rebranded in mods/openplay and build-verified. Phase 6 CI: republish a from-source signed build to GitHub Releases, then repoint downloadUrl + refresh sha256. The sha256 above pins the CURRENT GCS download so setup.py/ApkDownloader verify it (previously unverified)."
+      "_todo": "REBRAND CAVEAT: the source in mods/openplay is now com.yaaratech.openplay, but the hosted downloadUrl below still serves the ORIGINAL author's com.asjohn720.openplay build (the only one hosted). The sha256/downloadUrl pin that legacy binary so it still verifies on download; packageName/grants here describe the intended yaaratech build. To finish: build mods/openplay (com.yaaratech.openplay), host it (GitHub Releases), then update downloadUrl + sha256. Until then, a download installs the legacy id and these grants will not match it."
     }
   ]
 }

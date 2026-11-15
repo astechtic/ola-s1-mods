@@ -14,7 +14,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.asjohn720.openplay"
+        applicationId = "com.yaaratech.openplay"
         minSdk = 24
         targetSdk = 37
         versionCode = 42

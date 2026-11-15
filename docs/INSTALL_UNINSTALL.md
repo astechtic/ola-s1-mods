@@ -4,7 +4,7 @@ Installing and uninstalling a mod read the **same per-mod contract**, so they st
 symmetric: whatever install turns on, uninstall turns back off. The contract lives in the
 `grants` block of each entry in [`apks/manifest.json`](../apks/manifest.json) (the
 cross-tool source of truth) and is mirrored by `ModRegistry` in the Android app
-(`android/app/src/main/java/com/asjohn720/s1mods/adb/ModSpec.kt`).
+(`android/app/src/main/java/com/yaaratech/s1mods/adb/ModSpec.kt`).
 
 ## The grant contract
 Each mod declares:
@@ -49,7 +49,7 @@ Every grant/revoke step is best-effort (one unsupported op cannot abort the rest
   ```bash
   python setup.py                 # install bundled mods + grant each contract
   python setup.py --uninstall     # revert grants, then remove every mod in the manifest
-  python setup.py --uninstall com.asjohn720.ball com.asjohn720.musicmod   # specific mods
+  python setup.py --uninstall com.yaaratech.ball com.yaaratech.musicmod   # specific mods
   ```
   Both paths share the same discover → connect → unlock-ADB steps first.
 

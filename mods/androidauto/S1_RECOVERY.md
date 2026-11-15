@@ -6,11 +6,11 @@ Android Auto head-unit receiver with a C++/NDK core, AGPL-3.0), vendored via
 `git subtree --squash`, then rebranded to the S1 app.
 
 ## Confirmed: Android Auto == applicationId-rebranded open-headunit
-The shipped `com.asjohn720.androidauto.apk` decompiled to:
+The shipped `com.yaaratech.androidauto.apk` decompiled to:
 
 | Field | Shipped APK | open-headunit v.4.0.0-beta2 upstream |
 | --- | --- | --- |
-| applicationId | `com.asjohn720.androidauto` | `com.andrerinas.headunitrevived` |
+| applicationId | `com.yaaratech.androidauto` | `com.andrerinas.headunitrevived` |
 | versionCode / Name | `122` / `4.0.0-beta2` | `122` / `4.0.0-beta2` (**same**) |
 | code namespace | `com.andrerinas.openheadunit` | `com.andrerinas.openheadunit` (**same**) |
 | launcher | `com.andrerinas.openheadunit.main.MainActivity` | `com.andrerinas.openheadunit.main.MainActivity` (**same**) |
@@ -21,7 +21,7 @@ open-headunit v.4.0.0-beta2**. (Upstream deliberately keeps `applicationId` ≠ 
 so only the applicationId and label change here.)
 
 ## Rebrand applied in this repo (vs upstream)
-- `applicationId`: `com.andrerinas.headunitrevived` → **`com.asjohn720.androidauto`**
+- `applicationId`: `com.andrerinas.headunitrevived` → **`com.yaaratech.androidauto`**
   (`app/build.gradle.kts`). `namespace` stays `com.andrerinas.openheadunit`.
 - `title` + `app_name` strings → **"Android Auto"** (`app/src/main/res/values/strings.xml`;
   the launcher inherits the application `android:label="@string/title"`).
@@ -33,10 +33,10 @@ the one to ship) and `playstore`. Build with **Gradle 8.14.x** (the wrapper pins
 AGP 8.13.2) on **JDK 21** (JDK 25 fails this Gradle with a bare version string; Gradle 9.x
 removes the `archivesBaseName` property the build sets, so do not use 9.x here).
 - `:app:assembleGithubDebug` → full APK (C++ `src/main/cpp` + Shizuku AIDL all compile).
-- `:app:assembleGithubRelease` with a release keystore → **`com.asjohn720.androidauto`**,
+- `:app:assembleGithubRelease` with a release keystore → **`com.yaaratech.androidauto`**,
   122 / 4.0.0-beta2, label **Android Auto**, launcher
   `com.andrerinas.openheadunit.main.MainActivity` — an exact match to the shipped APK. The
-  APK is named `com.asjohn720.androidauto_4.0.0-beta2.apk` (upstream sets
+  APK is named `com.yaaratech.androidauto_4.0.0-beta2.apk` (upstream sets
   `archivesBaseName = applicationId_versionName`).
 
 ### Native toolchain (one-time)

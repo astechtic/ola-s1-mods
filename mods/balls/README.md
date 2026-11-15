@@ -21,10 +21,10 @@ It stays visible above all apps, giving you instant system control from anywhere
 ## Download
 
 <div style="display: flex; justify-content: center; align-items: center; gap: 10px;">
-    <a href="https://play.google.com/store/apps/details?id=com.asjohn720.ball">
+    <a href="https://play.google.com/store/apps/details?id=com.yaaratech.ball">
         <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" width="200">
     </a>
-    <a href="https://f-droid.org/en/packages/com.asjohn720.ball">
+    <a href="https://f-droid.org/en/packages/com.yaaratech.ball">
        <img src="https://upload.wikimedia.org/wikipedia/commons/a/a3/Get_it_on_F-Droid_(material_design).svg" width="200">
     </a>
 </div>

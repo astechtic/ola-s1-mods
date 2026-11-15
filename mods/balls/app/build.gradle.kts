@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.asjohn720.ball"
+    namespace = "com.yaaratech.ball"
     compileSdk {
         version = release(37) {
             minorApiLevel = 1
@@ -12,7 +12,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.asjohn720.ball"
+        applicationId = "com.yaaratech.ball"
         minSdk = 21
         targetSdk = 37
         versionCode = 25

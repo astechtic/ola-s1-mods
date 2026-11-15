@@ -10,7 +10,7 @@ The shipped `musicmod-release.apk` decompiled to:
 
 | Field | Shipped APK | Square v2.8.0 upstream |
 | --- | --- | --- |
-| applicationId | `com.asjohn720.musicmod` | `dev.lelonio.square` |
+| applicationId | `com.yaaratech.musicmod` | `dev.lelonio.square` |
 | versionCode / Name | `62` / `2.8.0` | `62` / `2.8.0` (**same**) |
 | code namespace | `dev.lelonio.square` | `dev.lelonio.square` (**same**) |
 | launcher | `dev.lelonio.square.ui.MainActivity` | `dev.lelonio.square.ui.MainActivity` (**same**) |
@@ -20,7 +20,7 @@ Same namespace, launcher and version → Music Mod is an **applicationId/label r
 Square v2.8.0**, nothing more.
 
 ## Rebrand applied in this repo (vs upstream)
-- `applicationId`: `dev.lelonio.square` → **`com.asjohn720.musicmod`** (`app/build.gradle.kts`).
+- `applicationId`: `dev.lelonio.square` → **`com.yaaratech.musicmod`** (`app/build.gradle.kts`).
   `namespace` stays `dev.lelonio.square` (as the shipped APK proves).
 - `app_name` string → **"Music Mod"** (`app/src/main/res/values/strings.xml`).
 - Version unchanged (already 62 / 2.8.0).
@@ -28,7 +28,7 @@ Square v2.8.0**, nothing more.
 ## Build: VERIFIED ✅ (compiles, Rust native core, signs)
 Module `:app`. Builds with Gradle **9.4.1** (AGP 8.13.2 needs Gradle 9.3–9.5; it is
 incompatible with 9.6's removed internal API — the project wrapper pins 9.3.0).
-`:app:assembleRelease` → `com.asjohn720.musicmod`, 62 / 2.8.0, label **Music Mod**, launcher
+`:app:assembleRelease` → `com.yaaratech.musicmod`, 62 / 2.8.0, label **Music Mod**, launcher
 `dev.lelonio.square.ui.MainActivity` — an exact match to the shipped APK. Output: per-ABI
 APKs (`arm64-v8a`, `armeabi-v7a`) plus a universal APK.
 

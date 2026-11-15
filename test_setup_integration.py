@@ -16,7 +16,7 @@ import tempfile
 import types
 
 _REPO = os.path.dirname(os.path.abspath(__file__))
-BALL = "com.asjohn720.ball"
+BALL = "com.yaaratech.ball"
 BALL_SVC = f"{BALL}/{BALL}.core.QuickBallService"
 FOREIGN_SVC = "com.other/.SvcA"
 

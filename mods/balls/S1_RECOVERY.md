@@ -10,16 +10,16 @@ namespace changed. QuickBall's `minSdk 21 / targetSdk 37` match the APK. So the 
 rebrand, not a code rewrite.
 
 ## Rebrand applied in this repo (vs upstream)
-- `namespace` + `applicationId`: `io.github.chayanforyou.quickball` → **`com.asjohn720.ball`**
-  (all 71 source/config references updated; package dir moved under `com/asjohn720/ball`).
+- `namespace` + `applicationId`: `io.github.chayanforyou.quickball` → **`com.yaaratech.ball`**
+  (all 71 source/config references updated; package dir moved under `com/yaaratech/ball`).
 - `app_name` string → **"Balls"**.
-- Manifest components resolve to `com.asjohn720.ball.ui.MainActivity` and
-  `com.asjohn720.ball.core.QuickBallService` — exactly what the S1Mods installer grants
+- Manifest components resolve to `com.yaaratech.ball.ui.MainActivity` and
+  `com.yaaratech.ball.core.QuickBallService` — exactly what the S1Mods installer grants
   (`AdbManager.grantBallPermissions` / `setup.py`).
 
 ## Build: VERIFIED ✅
 `./gradlew :app:assembleDebug` succeeds (Gradle 9.4.1, JDK 25, AGP via wrapper). Output
-`com.asjohn720.ball` labelled **Balls**. The project has two flavors — use **`foss`**
+`com.yaaratech.ball` labelled **Balls**. The project has two flavors — use **`foss`**
 (`assembleFossRelease`) for open-source distribution; `play` pulls Google Play/billing deps.
 
 ## Still to do
