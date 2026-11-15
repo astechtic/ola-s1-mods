@@ -27,7 +27,7 @@
 
 set -euo pipefail
 
-PKG="io.github.chayanforyou.quickball"
+PKG="com.asjohn720.ball"
 SERVICE="$PKG/$PKG.core.QuickBallService"
 PREFS="shared_prefs/quick_ball_prefs.xml"
 

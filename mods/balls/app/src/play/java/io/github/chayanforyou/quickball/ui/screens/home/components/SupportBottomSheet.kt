@@ -1,4 +1,4 @@
-package io.github.chayanforyou.quickball.ui.screens.home.components
+package com.asjohn720.ball.ui.screens.home.components
 
 import android.widget.Toast
 import androidx.activity.compose.LocalActivity
@@ -21,8 +21,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import io.github.chayanforyou.quickball.R
-import io.github.chayanforyou.quickball.billing.TipJarClient
+import com.asjohn720.ball.R
+import com.asjohn720.ball.billing.TipJarClient
 
 /**
  * Support sheet for the Google Play build: one-time tips through Play Billing.

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Quick Ball</string>
+    <string name="app_name">Balls</string>
     <string name="remove_battery_restriction">Don’t kill my app</string>
     <string name="github_repository">GitHub Repository</string>
     <string name="support_me">If you love my work.\nplease consider supporting me</string>

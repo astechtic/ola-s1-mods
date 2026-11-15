@@ -20,7 +20,7 @@
 
 # Gson & Domain Models
 -keep class com.google.gson.** { *; }
--keep class io.github.chayanforyou.quickball.domain.models.** { *; }
--keepclassmembers class io.github.chayanforyou.quickball.domain.models.** { *; }
--keepclassmembers enum io.github.chayanforyou.quickball.domain.models.** { *; }
+-keep class com.asjohn720.ball.domain.models.** { *; }
+-keepclassmembers class com.asjohn720.ball.domain.models.** { *; }
+-keepclassmembers enum com.asjohn720.ball.domain.models.** { *; }
 

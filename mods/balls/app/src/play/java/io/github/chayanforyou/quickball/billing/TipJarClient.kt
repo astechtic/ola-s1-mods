@@ -1,4 +1,4 @@
-package io.github.chayanforyou.quickball.billing
+package com.asjohn720.ball.billing
 
 import android.app.Activity
 import android.content.Context

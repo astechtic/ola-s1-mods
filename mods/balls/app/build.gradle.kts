@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "io.github.chayanforyou.quickball"
+    namespace = "com.asjohn720.ball"
     compileSdk {
         version = release(37) {
             minorApiLevel = 1
@@ -12,7 +12,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "io.github.chayanforyou.quickball"
+        applicationId = "com.asjohn720.ball"
         minSdk = 21
         targetSdk = 37
         versionCode = 25

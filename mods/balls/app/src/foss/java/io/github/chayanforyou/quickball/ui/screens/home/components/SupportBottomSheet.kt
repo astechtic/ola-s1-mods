@@ -1,4 +1,4 @@
-package io.github.chayanforyou.quickball.ui.screens.home.components
+package com.asjohn720.ball.ui.screens.home.components
 
 import android.content.ActivityNotFoundException
 import android.content.ClipData
@@ -19,7 +19,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
-import io.github.chayanforyou.quickball.R
+import com.asjohn720.ball.R
 
 private class SupportPlatform(val name: String, val host: String, val url: String)
 

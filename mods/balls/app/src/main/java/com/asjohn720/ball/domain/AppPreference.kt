@@ -1,0 +1,321 @@
+package com.asjohn720.ball.domain
+
+import android.content.Context
+import android.content.SharedPreferences
+import android.util.Log
+import androidx.core.content.edit
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import com.asjohn720.ball.domain.models.MenuAction
+import com.asjohn720.ball.domain.models.QuickBallMenuItem
+
+class AppPreference private constructor(context: Context) {
+    private val prefs: SharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+
+    companion object {
+        private const val PREFS_NAME = "quick_ball_prefs"
+        private const val KEY_QUICK_BALL_ENABLED = "quick_ball_enabled"
+        private const val KEY_BALL_SIZE = "ball_size"
+        private const val KEY_BALL_COLOR = "ball_color"
+        private const val KEY_BALL_ICON_COLOR = "ball_icon_color"
+        private const val KEY_BALL_BORDER_COLOR = "ball_border_color"
+        private const val KEY_BALL_BORDER_ENABLED = "ball_border_enabled"
+        private const val KEY_BALL_BORDER_WIDTH = "ball_border_width"
+        private const val KEY_MENU_BORDER_COLOR = "menu_border_color"
+        private const val KEY_MENU_BORDER_ENABLED = "menu_border_enabled"
+        private const val KEY_MENU_BORDER_WIDTH = "menu_border_width"
+        private const val KEY_MENU_COLOR = "menu_color"
+        private const val KEY_MENU_ICON_COLOR = "menu_icon_color"
+        private const val KEY_MENU_CONNECTOR_COLOR = "menu_connector_color"
+        private const val KEY_MENU_CONNECTOR_STYLE = "menu_connector_style"
+        private const val KEY_MENU_CONNECTOR_WIDTH = "menu_connector_width"
+        private const val KEY_MENU_SIZE = "menu_size"
+        private const val KEY_MENU_ICON_SIZE = "menu_icon_size"
+        private const val KEY_MENU_RADIUS = "menu_radius"
+        private const val KEY_TOAST_BG_COLOR = "toast_bg_color"
+        private const val KEY_TOAST_FG_COLOR = "toast_fg_color"
+        private const val KEY_PILL_COLOR = "pill_color"
+        private const val KEY_PILL_HEIGHT = "pill_height"
+        private const val KEY_PILL_THICKNESS = "pill_thickness"
+        private const val KEY_PILL_TOUCH_WIDTH = "pill_touch_width"
+        private const val KEY_PILL_ARC_ANGLE = "pill_arc_angle"
+        private const val KEY_GESTURE_ENABLED = "pill_gesture_enabled"
+        private const val KEY_DOUBLE_TAP = "pill_double_tap"
+        private const val KEY_TRIPLE_TAP = "pill_triple_tap"
+        private const val KEY_LONG_PRESS = "pill_long_press"
+        private const val KEY_SWIPE_UP = "pill_swipe_up"
+        private const val KEY_SWIPE_DOWN = "pill_swipe_down"
+        private const val KEY_STICK_TO_EDGE = "stick_to_edge"
+        private const val KEY_LOCK_BALL_POSITION = "lock_ball_position"
+        private const val KEY_SHOW_ON_LOCK_SCREEN = "show_on_lock_screen"
+        private const val KEY_HIDE_ON_LANDSCAPE = "hide_on_landscape"
+        private const val KEY_SELECTED_MENU_ITEMS = "selected_menu_items"
+        private const val KEY_SELECTED_APPS = "selected_apps"
+        private const val KEY_LANGUAGE = "language"
+        private const val KEY_PORTRAIT_IS_ON_RIGHT = "portrait_is_on_right"
+        private const val KEY_PORTRAIT_Y_FRACTION = "portrait_y_fraction"
+        private const val KEY_LANDSCAPE_IS_ON_RIGHT = "landscape_is_on_right"
+        private const val KEY_LANDSCAPE_Y_FRACTION = "landscape_y_fraction"
+        private const val KEY_ONBOARDING_COMPLETED = "onboarding_completed"
+        private const val KEY_HAPTIC_FEEDBACK_ENABLED = "haptic_feedback_enabled"
+        private const val KEY_HAPTIC_INTENSITY = "haptic_intensity"
+
+        private val gson = Gson()
+        private val menuItemListType = object : TypeToken<List<QuickBallMenuItem>>() {}.type
+
+        @Volatile
+        private var INSTANCE: AppPreference? = null
+
+        fun getInstance(context: Context): AppPreference {
+            return INSTANCE ?: synchronized(this) {
+                INSTANCE ?: AppPreference(context.applicationContext).also { INSTANCE = it }
+            }
+        }
+    }
+
+    var isOnboardingCompleted: Boolean
+        get() = prefs.getBoolean(KEY_ONBOARDING_COMPLETED, false)
+        set(value) = prefs.edit { putBoolean(KEY_ONBOARDING_COMPLETED, value) }
+
+    var isQuickBallEnabled: Boolean
+        get() = prefs.getBoolean(KEY_QUICK_BALL_ENABLED, true)
+        set(value) = prefs.edit { putBoolean(KEY_QUICK_BALL_ENABLED, value) }
+
+    var ballSize: Float
+        get() = prefs.getFloat(KEY_BALL_SIZE, AppDefaults.BALL_SIZE)
+        set(value) = prefs.edit { putFloat(KEY_BALL_SIZE, value) }
+
+    var ballColor: Int
+        get() = prefs.getInt(KEY_BALL_COLOR, AppDefaults.BALL_COLOR)
+        set(value) = prefs.edit { putInt(KEY_BALL_COLOR, value) }
+
+    var ballIconColor: Int
+        get() = prefs.getInt(KEY_BALL_ICON_COLOR, AppDefaults.BALL_ICON_COLOR)
+        set(value) = prefs.edit { putInt(KEY_BALL_ICON_COLOR, value) }
+
+    var menuColor: Int
+        get() = prefs.getInt(KEY_MENU_COLOR, AppDefaults.MENU_COLOR)
+        set(value) = prefs.edit { putInt(KEY_MENU_COLOR, value) }
+
+    var menuIconColor: Int
+        get() = prefs.getInt(KEY_MENU_ICON_COLOR, AppDefaults.MENU_ICON_COLOR)
+        set(value) = prefs.edit { putInt(KEY_MENU_ICON_COLOR, value) }
+
+    var ballBorderColor: Int
+        get() = prefs.getInt(KEY_BALL_BORDER_COLOR, AppDefaults.BALL_BORDER_COLOR)
+        set(value) = prefs.edit { putInt(KEY_BALL_BORDER_COLOR, value) }
+
+    // Before the toggle existed, a non-zero width meant the border was on
+    var isBallBorderEnabled: Boolean
+        get() = prefs.getBoolean(
+            KEY_BALL_BORDER_ENABLED,
+            prefs.getFloat(KEY_BALL_BORDER_WIDTH, 0f) > 0f || AppDefaults.BALL_BORDER_ENABLED
+        )
+        set(value) = prefs.edit { putBoolean(KEY_BALL_BORDER_ENABLED, value) }
+
+    var ballBorderWidth: Float
+        get() = prefs.getFloat(KEY_BALL_BORDER_WIDTH, AppDefaults.BALL_BORDER_WIDTH)
+            .coerceIn(AppDefaults.BORDER_WIDTH_MIN, AppDefaults.BORDER_WIDTH_MAX)
+        set(value) = prefs.edit { putFloat(KEY_BALL_BORDER_WIDTH, value) }
+
+    var menuBorderColor: Int
+        get() = prefs.getInt(KEY_MENU_BORDER_COLOR, AppDefaults.MENU_BORDER_COLOR)
+        set(value) = prefs.edit { putInt(KEY_MENU_BORDER_COLOR, value) }
+
+    // Before the toggle existed, a non-zero width meant the border was on
+    var isMenuBorderEnabled: Boolean
+        get() = prefs.getBoolean(
+            KEY_MENU_BORDER_ENABLED,
+            prefs.getFloat(KEY_MENU_BORDER_WIDTH, 0f) > 0f || AppDefaults.MENU_BORDER_ENABLED
+        )
+        set(value) = prefs.edit { putBoolean(KEY_MENU_BORDER_ENABLED, value) }
+
+    var menuBorderWidth: Float
+        get() = prefs.getFloat(KEY_MENU_BORDER_WIDTH, AppDefaults.MENU_BORDER_WIDTH)
+            .coerceIn(AppDefaults.BORDER_WIDTH_MIN, AppDefaults.BORDER_WIDTH_MAX)
+        set(value) = prefs.edit { putFloat(KEY_MENU_BORDER_WIDTH, value) }
+
+    var menuConnectorColor: Int
+        get() = prefs.getInt(KEY_MENU_CONNECTOR_COLOR, AppDefaults.MENU_CONNECTOR_COLOR)
+        set(value) = prefs.edit { putInt(KEY_MENU_CONNECTOR_COLOR, value) }
+
+    var menuConnectorStyle: String
+        get() = prefs.getString(KEY_MENU_CONNECTOR_STYLE, AppDefaults.MENU_CONNECTOR_STYLE) ?: AppDefaults.MENU_CONNECTOR_STYLE
+        set(value) = prefs.edit { putString(KEY_MENU_CONNECTOR_STYLE, value) }
+
+    var menuConnectorWidth: Float
+        get() = prefs.getFloat(KEY_MENU_CONNECTOR_WIDTH, AppDefaults.MENU_CONNECTOR_WIDTH)
+            .coerceIn(AppDefaults.MENU_CONNECTOR_WIDTH_MIN, AppDefaults.MENU_CONNECTOR_WIDTH_MAX)
+        set(value) = prefs.edit { putFloat(KEY_MENU_CONNECTOR_WIDTH, value) }
+
+    var menuIconSize: Float
+        get() = prefs.getFloat(KEY_MENU_ICON_SIZE, AppDefaults.MENU_ICON_SIZE)
+        set(value) = prefs.edit { putFloat(KEY_MENU_ICON_SIZE, value) }
+
+    var menuSize: Float
+        get() = prefs.getFloat(KEY_MENU_SIZE, AppDefaults.MENU_SIZE)
+            .coerceIn(AppDefaults.MENU_SIZE_MIN, AppDefaults.MENU_SIZE_MAX)
+        set(value) = prefs.edit { putFloat(KEY_MENU_SIZE, value) }
+
+    var menuRadius: Float
+        get() = prefs.getFloat(KEY_MENU_RADIUS, AppDefaults.MENU_RADIUS)
+            .coerceIn(AppDefaults.MENU_RADIUS_MIN, AppDefaults.MENU_RADIUS_MAX)
+        set(value) = prefs.edit { putFloat(KEY_MENU_RADIUS, value) }
+
+    var toastBgColor: Int
+        get() = prefs.getInt(KEY_TOAST_BG_COLOR, AppDefaults.TOAST_BG_COLOR)
+        set(value) = prefs.edit { putInt(KEY_TOAST_BG_COLOR, value) }
+
+    var toastFgColor: Int
+        get() = prefs.getInt(KEY_TOAST_FG_COLOR, AppDefaults.TOAST_FG_COLOR)
+        set(value) = prefs.edit { putInt(KEY_TOAST_FG_COLOR, value) }
+
+    var pillColor: Int
+        get() = prefs.getInt(KEY_PILL_COLOR, AppDefaults.PILL_COLOR)
+        set(value) = prefs.edit { putInt(KEY_PILL_COLOR, value) }
+
+    var pillHeight: Float
+        get() = prefs.getFloat(KEY_PILL_HEIGHT, AppDefaults.PILL_HEIGHT)
+        set(value) = prefs.edit { putFloat(KEY_PILL_HEIGHT, value) }
+
+    var pillThickness: Float
+        get() = prefs.getFloat(KEY_PILL_THICKNESS, AppDefaults.PILL_THICKNESS)
+        set(value) = prefs.edit { putFloat(KEY_PILL_THICKNESS, value) }
+
+    var pillTouchWidth: Float
+        get() = prefs.getFloat(KEY_PILL_TOUCH_WIDTH, AppDefaults.PILL_TOUCH_WIDTH)
+        set(value) = prefs.edit { putFloat(KEY_PILL_TOUCH_WIDTH, value) }
+
+    var pillArcAngle: Float
+        get() = prefs.getFloat(KEY_PILL_ARC_ANGLE, AppDefaults.PILL_ARC_ANGLE)
+        set(value) = prefs.edit { putFloat(KEY_PILL_ARC_ANGLE, value) }
+
+    var isGestureEnabled: Boolean
+        get() = prefs.getBoolean(KEY_GESTURE_ENABLED, AppDefaults.GESTURE_ENABLED)
+        set(value) = prefs.edit { putBoolean(KEY_GESTURE_ENABLED, value) }
+
+    var doubleTapAction: String
+        get() = prefs.getString(KEY_DOUBLE_TAP, AppDefaults.DOUBLE_TAP_ACTION) ?: AppDefaults.DOUBLE_TAP_ACTION
+        set(value) = prefs.edit { putString(KEY_DOUBLE_TAP, value) }
+
+    var tripleTapAction: String
+        get() = prefs.getString(KEY_TRIPLE_TAP, AppDefaults.TRIPLE_TAP_ACTION) ?: AppDefaults.TRIPLE_TAP_ACTION
+        set(value) = prefs.edit { putString(KEY_TRIPLE_TAP, value) }
+
+    var longPressAction: String
+        get() = prefs.getString(KEY_LONG_PRESS, AppDefaults.LONG_PRESS_ACTION) ?: AppDefaults.LONG_PRESS_ACTION
+        set(value) = prefs.edit { putString(KEY_LONG_PRESS, value) }
+
+    var swipeUpAction: String
+        get() = prefs.getString(KEY_SWIPE_UP, AppDefaults.SWIPE_UP_ACTION) ?: AppDefaults.SWIPE_UP_ACTION
+        set(value) = prefs.edit { putString(KEY_SWIPE_UP, value) }
+
+    var swipeDownAction: String
+        get() = prefs.getString(KEY_SWIPE_DOWN, AppDefaults.SWIPE_DOWN_ACTION) ?: AppDefaults.SWIPE_DOWN_ACTION
+        set(value) = prefs.edit { putString(KEY_SWIPE_DOWN, value) }
+
+    var isHapticFeedbackEnabled: Boolean
+        get() = prefs.getBoolean(KEY_HAPTIC_FEEDBACK_ENABLED, AppDefaults.HAPTIC_FEEDBACK_ENABLED)
+        set(value) = prefs.edit { putBoolean(KEY_HAPTIC_FEEDBACK_ENABLED, value) }
+
+    var hapticIntensity: String
+        get() = prefs.getString(KEY_HAPTIC_INTENSITY, AppDefaults.HAPTIC_INTENSITY) ?: AppDefaults.HAPTIC_INTENSITY
+        set(value) = prefs.edit { putString(KEY_HAPTIC_INTENSITY, value) }
+
+    var isStickToEdgeEnabled: Boolean
+        get() = prefs.getBoolean(KEY_STICK_TO_EDGE, true)
+        set(value) = prefs.edit { putBoolean(KEY_STICK_TO_EDGE, value) }
+
+    var isLockBallPositionEnabled: Boolean
+        get() = prefs.getBoolean(KEY_LOCK_BALL_POSITION, false)
+        set(value) = prefs.edit { putBoolean(KEY_LOCK_BALL_POSITION, value) }
+
+    var isShowOnLockScreenEnabled: Boolean
+        get() = prefs.getBoolean(KEY_SHOW_ON_LOCK_SCREEN, false)
+        set(value) = prefs.edit { putBoolean(KEY_SHOW_ON_LOCK_SCREEN, value) }
+
+    var isHideOnLandscapeEnabled: Boolean
+        get() = prefs.getBoolean(KEY_HIDE_ON_LANDSCAPE, false)
+        set(value) = prefs.edit { putBoolean(KEY_HIDE_ON_LANDSCAPE, value) }
+
+    var language: String
+        get() = prefs.getString(KEY_LANGUAGE, "en") ?: "en"
+        set(value) = prefs.edit { putString(KEY_LANGUAGE, value) }
+
+    var autoHideApps: Set<String>
+        get() = prefs.getStringSet(KEY_SELECTED_APPS, emptySet()) ?: emptySet()
+        set(value) = prefs.edit { putStringSet(KEY_SELECTED_APPS, value) }
+
+    var selectedMenuItems: List<QuickBallMenuItem>
+        get() {
+            val json = prefs.getString(KEY_SELECTED_MENU_ITEMS, null)
+            if (json.isNullOrEmpty()) return getDefaultSelectedItems()
+
+            return try {
+                val items: List<QuickBallMenuItem>? = gson.fromJson(json, menuItemListType)
+                val validItems = items?.mapNotNull { item ->
+                    if (item.packageName != null) {
+                        item.copy(action = MenuAction.LAUNCH_APP)
+                    } else {
+                        QuickBallMenuItem.getMenuItemByAction(item.action)
+                    }
+                }
+                if (validItems != null && validItems.size >= 2) validItems else getDefaultSelectedItems()
+            } catch (_: Exception) {
+                prefs.edit { remove(KEY_SELECTED_MENU_ITEMS) }
+                getDefaultSelectedItems()
+            }
+        }
+        set(value) {
+            try {
+                val json = gson.toJson(value)
+                prefs.edit { putString(KEY_SELECTED_MENU_ITEMS, json) }
+            } catch (e: Exception) {
+                Log.e("PreferenceManager", "Failed to save menu items", e)
+            }
+        }
+
+    var portraitIsOnRight: Boolean
+        get() = prefs.getBoolean(KEY_PORTRAIT_IS_ON_RIGHT, true)
+        set(value) = prefs.edit { putBoolean(KEY_PORTRAIT_IS_ON_RIGHT, value) }
+
+    var portraitYFraction: Float
+        get() = prefs.getFloat(KEY_PORTRAIT_Y_FRACTION, 0.5f)
+        set(value) = prefs.edit { putFloat(KEY_PORTRAIT_Y_FRACTION, value) }
+
+    fun savePortraitPosition(isOnRight: Boolean, yFraction: Float) {
+        prefs.edit {
+            putBoolean(KEY_PORTRAIT_IS_ON_RIGHT, isOnRight)
+            putFloat(KEY_PORTRAIT_Y_FRACTION, yFraction)
+        }
+    }
+
+    var landscapeIsOnRight: Boolean
+        get() = prefs.getBoolean(KEY_LANDSCAPE_IS_ON_RIGHT, true)
+        set(value) = prefs.edit { putBoolean(KEY_LANDSCAPE_IS_ON_RIGHT, value) }
+
+    var landscapeYFraction: Float
+        get() = prefs.getFloat(KEY_LANDSCAPE_Y_FRACTION, 0.5f)
+        set(value) = prefs.edit { putFloat(KEY_LANDSCAPE_Y_FRACTION, value) }
+
+    fun saveLandscapePosition(isOnRight: Boolean, yFraction: Float) {
+        prefs.edit {
+            putBoolean(KEY_LANDSCAPE_IS_ON_RIGHT, isOnRight)
+            putFloat(KEY_LANDSCAPE_Y_FRACTION, yFraction)
+        }
+    }
+
+    private fun getDefaultSelectedItems(): List<QuickBallMenuItem> {
+        val defaultActions = listOf(
+            MenuAction.VOLUME_UP,
+            MenuAction.VOLUME_DOWN,
+            MenuAction.BRIGHTNESS_UP,
+            MenuAction.BRIGHTNESS_DOWN,
+            MenuAction.LOCK_SCREEN
+        )
+
+        return defaultActions.mapNotNull { action ->
+            QuickBallMenuItem.getMenuItemByAction(action)
+        }
+    }
+}
