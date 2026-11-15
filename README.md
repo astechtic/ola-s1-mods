@@ -228,6 +228,39 @@ python ola.py interactive --ipv6 fe80::1234:5678:9abc:def0%22
 | Installed mod APKs | Yes (like any app) | Phone **Health → Remove**, or `setup.py --uninstall` (reverts grants first) |
 | Mod appops / permissions / accessibility | Yes | Reverted automatically on uninstall |
 
+### ✅ Safe vs. ⚠️ what you accept
+
+| ✅ Safe (by design, and verified) | ⚠️ What you accept (your call) |
+| --- | --- |
+| No system / boot / vendor / recovery partition writes — nothing flashed | **Warranty risk:** side-loading unapproved software can trigger Ola's exclusion **6.8** (*software "not designed or approved by the company"*) / **6.7** (modification). At Ola's discretion → [docs/WARRANTY.md](docs/WARRANTY.md) |
+| Powertrain, BMS, battery, motor, throttle, brakes — **never touched** | **Diagnostic ADB is enabled while active** (port 5555, anyone on your local network). A reboot clears it and ADB re-locks |
+| Exactly **one** persistent change (`scootermode`), auto-captured + **one-tap revert** | **Upstream app terms:** Music Mod (Spotify/YT-Music client) & projection receivers carry their own third-party ToS → [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) |
+| System / MoveOS / Ola packages **cannot** be removed (guardrail + test) | **Unofficial & unsupported:** not affiliated with Ola; no Ola support; use at your own risk |
+| Every install is **SHA-256 verified**; a mismatch is refused | Keep **MoveOS updated** — letting it go stale is itself a listed warranty exclusion |
+| **No cloud / account / telematics / eSIM access** — local network only | Mods run on the parked vehicle only; don't interact with the head unit while riding |
+| **Fully reversible** — uninstall mods + restore stock, no reflash needed | |
+
+### 🛡️ Warranty — how safe, how risky
+
+- **Lower risk, because:** the tool is head-unit-only and reversible, and it never touches the battery, BMS, motor, throttle, or brakes — so it has **no technical path** to cause the defects the long **battery** warranty covers.
+- **The real risk is contractual, not mechanical:** Ola's T&C **6.8** excludes software it didn't approve, and **6.7** excludes modifications; the **infotainment electronics (~36 months)** are the most exposed. Enforcement is **at Ola's discretion**, and India has no confirmed Magnuson-Moss-style "must prove the mod caused the fault" rule.
+- **Reduce it to near-zero before any service visit or OTA:** **Health → Restore stock state**, **Health → Remove** the mods (or `setup.py --revert --uninstall`), reboot, and keep MoveOS updated — the vehicle is then back to its captured stock state with nothing modded to see.
+
+> Full grounded analysis with Ola's exact wording, sources, and the India/EU/US legal nuance: **[docs/WARRANTY.md](docs/WARRANTY.md)**. This is informational, not legal advice — your own warranty certificate is the authority.
+
+### 🧪 Verified end-to-end (v1.1.1)
+
+| Check | Result |
+| --- | --- |
+| Python test suite (`pytest`) | ✅ 31/31 pass |
+| Android release build (R8/minify) | ✅ builds, installs & launches, no crashes |
+| Release signing | ✅ release cert `CN=Yaaratech S1Mods, O=Astechtic` (updates in place) |
+| Published APK provenance | ✅ committed `S1Mods-v1.1.1.apk` SHA-256 = the `v1.1.1` release asset |
+| Bundled mod integrity | ✅ all bundled APKs match their `apks/manifest.json` SHA-256 |
+| Device-query parsers | ✅ `dumpsys` / `appops` / accessibility validated on a live Android device |
+| Safety guardrail | ✅ refusing to uninstall MoveOS/system packages is covered by a test |
+| Git / release sync | ✅ `main` = tag `v1.1.1`; v1.1.1 is the Latest release (app + `SHA256SUMS`) |
+
 ---
 
 ## 📁 Repository Structure
@@ -241,7 +274,7 @@ ola-s1-mods/
 │   ├── androidauto/       #   open-headunit fork   (AGPL-3.0)
 │   └── openplay/          #   DiPlay fork          (GPL-3.0)
 ├── apks/                  # Mod APKs (single source of truth) + manifest.json
-├── docs/                  # BUILD and other guides
+├── docs/                  # SAFETY, WARRANTY, ECOSYSTEM, INSTALL_UNINSTALL, BUILD guides
 ├── LICENSES/              # Canonical GPL-3.0 / AGPL-3.0 texts + license matrix
 ├── ola.py                 # Pure Python gRPC root communication engine
 ├── setup.py               # Automated discovery, unlock, verify & install engine
